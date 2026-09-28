@@ -534,6 +534,95 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    if (req.method === 'GET' && path === '/v1/entries') {
+      return send(res, 200, { items: listEntries(url) });
+    }
+
+    if (req.method === 'PUT' && path.startsWith('/v1/entries/')) {
+      const id = decodeURIComponent(path.slice('/v1/entries/'.length));
+      const body = await readJson(req);
+      if (!id || String(body.id || '') !== id || !body.appType) {
+        return send(res, 400, { error: 'invalid entry' });
+      }
+      qEntryUpsert.run(
+        id,
+        actor(body.author),
+        String(body.appType),
+        body.title ? String(body.title) : null,
+        String(body.body || ''),
+        body.payload ? JSON.stringify(body.payload) : null,
+        ['shared','xiaoci','laoshi'].includes(body.visibility) ? body.visibility : 'shared',
+        Number(body.createdAt || Date.now()),
+        Number(body.updatedAt || Date.now()),
+      );
+      return send(res, 200, { ok: true, id });
+    }
+
+    if (req.method === 'DELETE' && path.startsWith('/v1/entries/')) {
+      const id = decodeURIComponent(path.slice('/v1/entries/'.length));
+      const body = await readJson(req);
+      const existing = qEntryGet.get(id);
+      if (existing) qEntryTombstone.run(Number(body.updatedAt || Date.now()), id);
+      return send(res, 204);
+    }
+
+    if (req.method === 'GET' && path === '/v1/events') {
+      return send(res, 200, { items: listEvents(url) });
+    }
+
+    if (req.method === 'POST' && path === '/v1/events') {
+      const body = await readJson(req);
+      const id = String(body.id || randomUUID());
+      qEventInsert.run(
+        id,
+        String(body.type || 'generic'),
+        String(body.source || 'shared-phone'),
+        body.payload ? JSON.stringify(body.payload) : null,
+        Number(body.createdAt || Date.now()),
+        body.expiresAt ? Number(body.expiresAt) : null,
+        body.consumedAt ? Number(body.consumedAt) : null,
+      );
+      return send(res, 201, { ok: true, id });
+    }
+
+    if (req.method === 'POST' && /^\/v1\/events\/[^/]+\/consume$/.test(path)) {
+      const id = decodeURIComponent(path.split('/')[3]);
+      const body = await readJson(req);
+      qEventConsume.run(Number(body.consumedAt || Date.now()), id);
+      return send(res, 200, { ok: true });
+    }
+
+    if (req.method === 'GET' && path === '/v1/sessions') {
+      return send(res, 200, { items: listSessions(url) });
+    }
+
+    if (req.method === 'PUT' && path.startsWith('/v1/sessions/')) {
+      const id = decodeURIComponent(path.slice('/v1/sessions/'.length));
+      const body = await readJson(req);
+      if (!id || String(body.id || '') !== id || !['cedar','coc','game'].includes(body.kind)) {
+        return send(res, 400, { error: 'invalid session' });
+      }
+      const status = ['active','paused','completed','archived'].includes(body.status) ? body.status : 'active';
+      qSessionUpsert.run(
+        id,
+        body.kind,
+        body.title ? String(body.title) : null,
+        status,
+        JSON.stringify(body.payload || {}),
+        actor(body.updatedBy),
+        Number(body.createdAt || Date.now()),
+        Number(body.updatedAt || Date.now()),
+      );
+      return send(res, 200, { ok: true, id });
+    }
+
+    if (req.method === 'DELETE' && path.startsWith('/v1/sessions/')) {
+      const id = decodeURIComponent(path.slice('/v1/sessions/'.length));
+      const body = await readJson(req);
+      const existing = qSessionGet.get(id);
+      if (existing) qSessionTombstone.run(actor(body.updatedBy), Number(body.updatedAt || Date.now()), id);
+      return send(res, 204);
+    }
     const mediaMatch = path.match(/^\/v1\/media\/([^/]+)$/);
     if (mediaMatch) {
       const id = decodeURIComponent(mediaMatch[1]);
