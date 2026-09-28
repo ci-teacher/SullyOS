@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 
@@ -205,6 +205,7 @@ ON CONFLICT(id) DO UPDATE SET
 `);
 const qSessionTombstone = db.prepare('UPDATE sessions SET deleted=1, updated_by=?, updated_at=? WHERE id=?');
 const qMediaGet = db.prepare('SELECT * FROM media WHERE id = ?');
+const qMediaDelete = db.prepare('DELETE FROM media WHERE id = ?');
 const qMediaUpsert = db.prepare(`
 INSERT INTO media(id, mime, file_path, size, updated_at)
 VALUES (?, ?, ?, ?, ?)
@@ -746,6 +747,15 @@ const server = http.createServer(async (req, res) => {
         const row = qMediaGet.get(id);
         if (!row || !existsSync(row.file_path)) return send(res, 404, { error: 'media not found' });
         return sendBinary(res, 200, readFileSync(row.file_path), row.mime);
+      }
+
+      if (req.method === 'DELETE') {
+        const row = qMediaGet.get(id);
+        if (row?.file_path && existsSync(row.file_path)) {
+          try { unlinkSync(row.file_path); } catch {}
+        }
+        qMediaDelete.run(id);
+        return send(res, 204);
       }
     }
 
