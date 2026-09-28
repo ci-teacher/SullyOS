@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
+type PatternMode = 'header' | 'corner' | 'mixed';
+
 type LabState = {
   accent: string;
   logo: string;
@@ -9,34 +11,39 @@ type LabState = {
   gridGapY: number;
   shadowAlpha: number;
   dockBlur: number;
+  dotSize: number;
   dotSpacing: number;
   patternOpacity: number;
   pagePadding: number;
   titleSize: number;
+  patternMode: PatternMode;
 };
 
-const DEFAULT: LabState = {
+const XIAOCI_BASELINE: LabState = {
   accent: '#FF3300',
   logo: '#B5ADAC',
-  iconSize: 60,
-  iconRadius: 14,
-  gridGapX: 22,
-  gridGapY: 24,
-  shadowAlpha: 0.055,
-  dockBlur: 18,
-  dotSpacing: 13,
-  patternOpacity: 0.16,
-  pagePadding: 22,
-  titleSize: 17,
+  iconSize: 52,
+  iconRadius: 10,
+  gridGapX: 12,
+  gridGapY: 16,
+  shadowAlpha: 0.03,
+  dockBlur: 30,
+  dotSize: 14,
+  dotSpacing: 30,
+  patternOpacity: 0.45,
+  pagePadding: 30,
+  titleSize: 15,
+  patternMode: 'header',
 };
 
-const PRESETS: Array<{ name: string; note: string; value: Partial<LabState> }> = [
-  { name: 'A · 干净', note: '先看比例和留白', value: { iconSize: 60, iconRadius: 14, gridGapX: 22, gridGapY: 24, shadowAlpha: 0.04, patternOpacity: 0.10 } },
-  { name: 'B · 更软', note: '圆角稍大', value: { iconSize: 61, iconRadius: 16, gridGapX: 21, gridGapY: 25, shadowAlpha: 0.03, patternOpacity: 0.16 } },
-  { name: 'C · 利落', note: '收圆角、放间距', value: { iconSize: 59, iconRadius: 12, gridGapX: 25, gridGapY: 27, shadowAlpha: 0.025, patternOpacity: 0.08 } },
+const PATTERNS: Array<{ mode: PatternMode; name: string; note: string }> = [
+  { mode: 'header', name: 'A · 页头大波点', note: '大块出现，最接近 Sanrio 的图形感' },
+  { mode: 'corner', name: 'B · 角落大波点', note: '主体更安静，pattern 集中在一个角' },
+  { mode: 'mixed', name: 'C · 波点＋条纹', note: '大波点做主角，条纹只做很小的辅助' },
 ];
 
 const marks = ['circle','bar','double','dotgrid','ring','corner','pill','cross','line','tiny','square','pair'];
+const names = ['日记','相册','房间','动态','日历','查手机','记忆','手账','音乐','游戏','阅读','设置'];
 
 const Mark: React.FC<{ kind: string; color: string }> = ({ kind, color }) => {
   if (kind === 'circle') return <span style={{ width: 18, height: 18, borderRadius: 999, border: '2px solid ' + color }} />;
@@ -82,19 +89,40 @@ const Slider: React.FC<{
 const PrivateDesignLab: React.FC = () => {
   const [state, setState] = useState<LabState>(() => {
     try {
-      const raw = localStorage.getItem('xiaoci_design_lab_v1');
-      return raw ? { ...DEFAULT, ...JSON.parse(raw) } : DEFAULT;
+      const raw = localStorage.getItem('xiaoci_design_lab_v2');
+      return raw ? { ...XIAOCI_BASELINE, ...JSON.parse(raw) } : XIAOCI_BASELINE;
     } catch {
-      return DEFAULT;
+      return XIAOCI_BASELINE;
     }
   });
+
+  const persist = (next: LabState) => {
+    try { localStorage.setItem('xiaoci_design_lab_v2', JSON.stringify(next)); } catch {}
+  };
 
   const update = (key: keyof LabState, value: string | number) => {
     setState(prev => {
       const next = { ...prev, [key]: value } as LabState;
-      try { localStorage.setItem('xiaoci_design_lab_v1', JSON.stringify(next)); } catch {}
+      persist(next);
       return next;
     });
+  };
+
+  const setPattern = (patternMode: PatternMode) => {
+    setState(prev => {
+      const next = { ...prev, patternMode };
+      persist(next);
+      return next;
+    });
+  };
+
+  const applyBaseline = () => {
+    setState(XIAOCI_BASELINE);
+    persist(XIAOCI_BASELINE);
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
   };
 
   const previewStyle = useMemo<React.CSSProperties>(() => ({
@@ -107,29 +135,18 @@ const PrivateDesignLab: React.FC = () => {
     ['--lab-shadow' as string]: '0 3px 14px rgba(24,20,18,' + state.shadowAlpha + ')',
     ['--lab-pad' as string]: state.pagePadding + 'px',
     ['--lab-title' as string]: state.titleSize + 'px',
+    ['--lab-dot-size' as string]: state.dotSize + 'px',
     ['--lab-dot-space' as string]: state.dotSpacing + 'px',
     ['--lab-pattern-opacity' as string]: state.patternOpacity,
     ['--lab-dock-blur' as string]: state.dockBlur + 'px',
   }), [state]);
 
-  const applyPreset = (preset: (typeof PRESETS)[number]) => {
-    setState(prev => {
-      const next = { ...prev, ...preset.value };
-      try { localStorage.setItem('xiaoci_design_lab_v1', JSON.stringify(next)); } catch {}
-      return next;
-    });
+  const dotPattern: React.CSSProperties = {
+    opacity: state.patternOpacity,
+    backgroundImage:
+      'radial-gradient(circle, var(--lab-accent) 0, var(--lab-accent) calc(var(--lab-dot-size) / 2), transparent calc(var(--lab-dot-size) / 2 + 1px))',
+    backgroundSize: 'var(--lab-dot-space) var(--lab-dot-space)',
   };
-
-  const reset = () => {
-    setState(DEFAULT);
-    try { localStorage.setItem('xiaoci_design_lab_v1', JSON.stringify(DEFAULT)); } catch {}
-  };
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
-  };
-
-  const names = ['日记','相册','房间','动态','日历','查手机','记忆','手账','音乐','游戏','阅读','设置'];
 
   return (
     <div className="min-h-full overflow-y-auto bg-[#f5f5f5] text-[#1b1b1b]">
@@ -139,31 +156,47 @@ const PrivateDesignLab: React.FC = () => {
             <div>
               <div className="text-[10px] font-bold tracking-[0.18em] text-black/30">PRIVATE UI</div>
               <h1 className="mt-1 text-xl font-bold">Design Lab</h1>
-              <p className="mt-2 text-xs leading-5 text-black/45">先调骨架。右边故意没有正式 icon，也不放插画。</p>
+              <p className="mt-2 text-xs leading-5 text-black/45">骨架用你调出的参数。现在只比较大波点怎么摆。</p>
             </div>
             <a href="/" className="rounded-full border border-black/10 px-3 py-2 text-[11px] font-semibold text-black/50">回首页</a>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {PRESETS.map(preset => (
-              <button key={preset.name} onClick={() => applyPreset(preset)} className="rounded-[14px] border border-black/[0.08] px-2 py-3 text-left active:scale-[.98]">
-                <div className="text-[11px] font-bold">{preset.name}</div>
-                <div className="mt-1 text-[9px] leading-3 text-black/35">{preset.note}</div>
+          <button
+            onClick={applyBaseline}
+            className="mt-5 w-full rounded-[14px] border border-[#FF3300]/25 bg-[#FF3300]/[0.035] px-3 py-3 text-left"
+          >
+            <div className="text-[11px] font-bold text-[#FF3300]">Xiaoci Baseline</div>
+            <div className="mt-1 text-[9px] leading-4 text-black/40">52 / 10 / 12 / 16 / shadow .03 / padding 30 / title 15 / blur 30</div>
+          </button>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {PATTERNS.map(pattern => (
+              <button
+                key={pattern.mode}
+                onClick={() => setPattern(pattern.mode)}
+                className={
+                  'rounded-[14px] border px-2 py-3 text-left active:scale-[.98] ' +
+                  (state.patternMode === pattern.mode ? 'border-[#FF3300] bg-[#FF3300]/[0.04]' : 'border-black/[0.08]')
+                }
+              >
+                <div className={state.patternMode === pattern.mode ? 'text-[11px] font-bold text-[#FF3300]' : 'text-[11px] font-bold'}>{pattern.name}</div>
+                <div className="mt-1 text-[9px] leading-3 text-black/35">{pattern.note}</div>
               </button>
             ))}
           </div>
 
           <div className="mt-6 space-y-5">
-            <Slider label="App icon size" value={state.iconSize} min={52} max={68} onChange={v => update('iconSize', v)} suffix="px" />
-            <Slider label="Icon radius" value={state.iconRadius} min={9} max={20} onChange={v => update('iconRadius', v)} suffix="px" />
-            <Slider label="Grid gap X" value={state.gridGapX} min={12} max={32} onChange={v => update('gridGapX', v)} suffix="px" />
-            <Slider label="Grid gap Y" value={state.gridGapY} min={16} max={34} onChange={v => update('gridGapY', v)} suffix="px" />
-            <Slider label="Shadow" value={state.shadowAlpha} min={0} max={0.14} step={0.005} onChange={v => update('shadowAlpha', v)} />
-            <Slider label="Page padding" value={state.pagePadding} min={16} max={30} onChange={v => update('pagePadding', v)} suffix="px" />
-            <Slider label="Title size" value={state.titleSize} min={15} max={22} onChange={v => update('titleSize', v)} suffix="px" />
-            <Slider label="Dot spacing" value={state.dotSpacing} min={8} max={20} onChange={v => update('dotSpacing', v)} suffix="px" />
-            <Slider label="Pattern opacity" value={state.patternOpacity} min={0} max={0.45} step={0.01} onChange={v => update('patternOpacity', v)} />
-            <Slider label="Dock blur" value={state.dockBlur} min={0} max={30} onChange={v => update('dockBlur', v)} suffix="px" />
+            <Slider label="App icon size" value={state.iconSize} min={48} max={64} onChange={v => update('iconSize', v)} suffix="px" />
+            <Slider label="Icon radius" value={state.iconRadius} min={7} max={18} onChange={v => update('iconRadius', v)} suffix="px" />
+            <Slider label="Grid gap X" value={state.gridGapX} min={8} max={28} onChange={v => update('gridGapX', v)} suffix="px" />
+            <Slider label="Grid gap Y" value={state.gridGapY} min={12} max={30} onChange={v => update('gridGapY', v)} suffix="px" />
+            <Slider label="Shadow" value={state.shadowAlpha} min={0} max={0.12} step={0.005} onChange={v => update('shadowAlpha', v)} />
+            <Slider label="Page padding" value={state.pagePadding} min={18} max={34} onChange={v => update('pagePadding', v)} suffix="px" />
+            <Slider label="Title size" value={state.titleSize} min={13} max={20} onChange={v => update('titleSize', v)} suffix="px" />
+            <Slider label="大波点直径" value={state.dotSize} min={8} max={24} onChange={v => update('dotSize', v)} suffix="px" />
+            <Slider label="波点间距" value={state.dotSpacing} min={20} max={46} onChange={v => update('dotSpacing', v)} suffix="px" />
+            <Slider label="Pattern opacity" value={state.patternOpacity} min={0} max={0.65} step={0.01} onChange={v => update('patternOpacity', v)} />
+            <Slider label="Dock blur" value={state.dockBlur} min={0} max={40} onChange={v => update('dockBlur', v)} suffix="px" />
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
@@ -177,10 +210,7 @@ const PrivateDesignLab: React.FC = () => {
             </label>
           </div>
 
-          <div className="mt-5 flex gap-2">
-            <button onClick={reset} className="flex-1 rounded-full border border-black/10 py-2.5 text-xs font-semibold">重置</button>
-            <button onClick={() => void copy()} className="flex-1 rounded-full bg-black py-2.5 text-xs font-semibold text-white">复制参数</button>
-          </div>
+          <button onClick={() => void copy()} className="mt-5 w-full rounded-full bg-black py-2.5 text-xs font-semibold text-white">复制参数</button>
         </aside>
 
         <main className="flex min-h-[820px] items-start justify-center rounded-[28px] border border-black/[0.06] bg-white p-4 sm:p-8">
@@ -190,21 +220,32 @@ const PrivateDesignLab: React.FC = () => {
               <span className="tracking-[.12em]">•••</span>
             </div>
 
-            <div className="px-[var(--lab-pad)] pt-11">
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="text-[11px] font-semibold text-black/35">9月28日 星期一</div>
-                  <div className="mt-1 text-[46px] font-semibold leading-none tracking-[-.055em]">20:53</div>
-                  <div className="mt-3 text-[var(--lab-title)] font-bold">小手机</div>
-                </div>
+            {state.patternMode === 'header' && (
+              <div className="pointer-events-none absolute right-[-8px] top-[72px] h-[142px] w-[156px]" style={dotPattern} />
+            )}
+
+            {state.patternMode === 'corner' && (
+              <div className="pointer-events-none absolute bottom-[92px] right-[-18px] h-[142px] w-[142px] rounded-tl-[48px]" style={dotPattern} />
+            )}
+
+            {state.patternMode === 'mixed' && (
+              <>
+                <div className="pointer-events-none absolute right-[-12px] top-[78px] h-[132px] w-[150px]" style={dotPattern} />
                 <div
-                  className="h-[76px] w-[76px] rounded-full"
+                  className="pointer-events-none absolute bottom-[92px] right-[-6px] h-[82px] w-[82px]"
                   style={{
-                    opacity: 'var(--lab-pattern-opacity)' as any,
-                    backgroundImage: 'radial-gradient(circle, var(--lab-logo) 2px, transparent 2.2px)',
-                    backgroundSize: 'var(--lab-dot-space) var(--lab-dot-space)',
+                    opacity: Math.min(state.patternOpacity * 0.72, 0.42),
+                    backgroundImage: 'repeating-linear-gradient(-45deg, var(--lab-accent) 0, var(--lab-accent) 7px, transparent 7px, transparent 18px)',
                   }}
                 />
+              </>
+            )}
+
+            <div className="relative z-10 px-[var(--lab-pad)] pt-11">
+              <div>
+                <div className="text-[11px] font-semibold text-black/35">9月28日 星期一</div>
+                <div className="mt-1 text-[46px] font-semibold leading-none tracking-[-.055em]">20:53</div>
+                <div className="mt-3 text-[var(--lab-title)] font-bold">小手机</div>
               </div>
 
               <div className="mt-9 grid grid-cols-4" style={{ columnGap: 'var(--lab-gap-x)', rowGap: 'var(--lab-gap-y)' }}>
@@ -228,7 +269,7 @@ const PrivateDesignLab: React.FC = () => {
               </div>
             </div>
 
-            <div className="absolute bottom-5 left-1/2 w-[306px] -translate-x-1/2 rounded-[26px] border border-black/[0.07] bg-white/80 px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,.055)] backdrop-blur-[var(--lab-dock-blur)]">
+            <div className="absolute bottom-5 left-1/2 z-20 w-[306px] -translate-x-1/2 rounded-[26px] border border-black/[0.07] bg-white/80 px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,.055)] backdrop-blur-[var(--lab-dock-blur)]">
               <div className="flex items-center justify-between">
                 {['circle','bar','ring','dotgrid'].map((kind, index) => (
                   <div key={kind} className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-black/[0.045] bg-white/80">
@@ -237,11 +278,6 @@ const PrivateDesignLab: React.FC = () => {
                 ))}
               </div>
             </div>
-
-            <div
-              className="absolute bottom-0 right-0 h-20 w-20 opacity-[var(--lab-pattern-opacity)]"
-              style={{ backgroundImage: 'repeating-linear-gradient(-45deg, var(--lab-accent) 0, var(--lab-accent) 5px, transparent 5px, transparent 12px)' }}
-            />
           </div>
         </main>
       </div>
