@@ -8,10 +8,19 @@ function normalizeRecords(payload: SharedListResponse<SharedDiaryRecord> | Share
   return Array.isArray(payload) ? payload : Array.isArray(payload.items) ? payload.items : [];
 }
 
-export function mergeDiaryCopies(local: DiaryEntry[], remote: DiaryEntry[]): DiaryEntry[] {
+export function mergeDiaryCopies(local: DiaryEntry[], remote: SharedDiaryRecord[]): DiaryEntry[] {
   const byDay = new Map<string, DiaryEntry>();
+  for (const diary of local) byDay.set(`${diary.charId}:${diary.date}`, diary);
 
-  for (const diary of [...local, ...remote]) {
+  for (const record of remote) {
+    const diary = record.diary;
+    if (record.deleted || !diary) {
+      for (const [key, existing] of byDay) {
+        if (existing.id === (diary?.id || '') && (existing.timestamp || 0) <= record.updatedAt) byDay.delete(key);
+      }
+      continue;
+    }
+
     const key = `${diary.charId}:${diary.date}`;
     const existing = byDay.get(key);
     if (!existing || (diary.timestamp || 0) >= (existing.timestamp || 0)) byDay.set(key, diary);
@@ -20,19 +29,21 @@ export function mergeDiaryCopies(local: DiaryEntry[], remote: DiaryEntry[]): Dia
   return [...byDay.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export async function fetchSharedDiaries(charId: string): Promise<DiaryEntry[]> {
+export async function fetchSharedDiaryRecords(charId: string): Promise<SharedDiaryRecord[]> {
   const payload = await sharedRequest<SharedListResponse<SharedDiaryRecord> | SharedDiaryRecord[]>(
     `/v1/diaries?charId=${encodeURIComponent(charId)}`,
     { method: 'GET' },
   );
-  return normalizeRecords(payload).map(record => record.diary);
+  return normalizeRecords(payload);
 }
 
 export async function saveSharedDiary(diary: DiaryEntry): Promise<void> {
+  const now = Date.now();
   const record: SharedDiaryRecord = {
-    diary: { ...diary, timestamp: Date.now() },
+    diary: { ...diary, timestamp: now },
     updatedBy: resolveSharedActor(),
-    updatedAt: Date.now(),
+    updatedAt: now,
+    deleted: false,
   };
 
   await sharedRequest(`/v1/diaries/${encodeURIComponent(diary.id)}`, {
@@ -44,5 +55,6 @@ export async function saveSharedDiary(diary: DiaryEntry): Promise<void> {
 export async function deleteSharedDiary(id: string): Promise<void> {
   await sharedRequest(`/v1/diaries/${encodeURIComponent(id)}`, {
     method: 'DELETE',
+    body: JSON.stringify({ updatedBy: resolveSharedActor(), updatedAt: Date.now() }),
   });
 }
