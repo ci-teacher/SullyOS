@@ -76,6 +76,17 @@ CREATE TABLE IF NOT EXISTS wake_signals (
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
 `);
 
+function ensureColumn(table, column, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!columns.some(row => row.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    console.log(`[shared-phone] migrated ${table}.${column}`);
+  }
+}
+
+// Forward-only lightweight migrations for databases created by earlier private builds.
+ensureColumn('diaries', 'deleted', 'INTEGER NOT NULL DEFAULT 0');
+
 const qDiaryList = db.prepare('SELECT id, payload, updated_by, updated_at, deleted FROM diaries WHERE char_id = ? ORDER BY date DESC');
 const qDiaryUpsert = db.prepare(`
 INSERT INTO diaries(id, char_id, date, payload, updated_by, updated_at)
