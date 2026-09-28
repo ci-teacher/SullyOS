@@ -18,6 +18,8 @@ import PersonaSim, { LifeLog, generatePersonaScript } from './PersonaSim';
 import { usePersonaSim, personaSimStore } from '../utils/personaSimStore';
 import { getLastInnerState } from '../utils/emotionApply';
 import { trackEvent } from '../utils/analytics';
+import { isSharedApiEnabled, sharedRequest } from '../utils/shared/sharedClient';
+import type { SharedActivity } from '../utils/shared/types';
 import { buildPhoneEvidenceChatCard, normalizePhoneEvidence, phoneFieldToText } from '../utils/phoneEvidence';
 import { CharacterGroupFilterBar, filterCharactersByGroup, GROUP_FILTER_ALL } from '../components/character/CharacterGroupFilter';
 import { getCheckPhoneApi, resolveCheckPhoneApi, setCheckPhoneApi } from '../utils/checkPhoneApi';
@@ -270,6 +272,7 @@ const CheckPhone: React.FC = () => {
     const [showApiSettings, setShowApiSettings] = useState(false);
     const [phoneApiConfig, setPhoneApiConfigState] = useState<APIConfig | null>(() => getCheckPhoneApi());
     const [testingPhoneApi, setTestingPhoneApi] = useState(false);
+    const [sharedPhoneActivity, setSharedPhoneActivity] = useState<SharedActivity[]>([]);
     const [phoneApiTestResult, setPhoneApiTestResult] = useState<string | null>(null);
     const effectiveApiConfig = resolveCheckPhoneApi(phoneApiConfig, apiConfig);
     const phoneApiFollowsDefault = !phoneApiConfig?.baseUrl;
@@ -425,6 +428,15 @@ const CheckPhone: React.FC = () => {
         window.addEventListener('check-phone-api-changed', sync);
         return () => window.removeEventListener('check-phone-api-changed', sync);
     }, []);
+
+    useEffect(() => {
+        if (!isSharedApiEnabled()) return;
+        let cancelled = false;
+        void sharedRequest<{ items: SharedActivity[] }>('/v1/activity?limit=24', { method: 'GET' }).then(result => {
+            if (!cancelled && result?.items) setSharedPhoneActivity(result.items);
+        });
+        return () => { cancelled = true; };
+    }, [view, activeAppId]);
 
     // Reset page scroll on navigation to prevent mobile layout shift
     useEffect(() => {
@@ -2099,9 +2111,29 @@ ${olderText}
     const RING_C = 2 * Math.PI * 42;
 
     const activity = (() => {
-        const items = allSorted.slice(0, 4).reverse().map(r => ({ t: r.timestamp, label: `打开${appLabel(r.type)}` }));
-        if (lastTs) items.push({ t: Date.now(), label: '锁屏' });
-        return items;
+        const sharedLabels: Record<string, string> = {
+            'phone.open': '打开小手机',
+            'teacher.home.open': '来到老师首页',
+            'teacher.enter_app': '进入 App',
+            'diary.save': '保存日记',
+            'diary.delete': '删除日记',
+            'gallery.save': '保存相册内容',
+            'gallery.delete': '删除相册内容',
+            'spark.save': '更新 Spark',
+            'spark.delete': '删除 Spark',
+            'note.save': '留下便签',
+            'note.delete': '删除便签',
+            'anniversary.save': '更新纪念日',
+            'anniversary.delete': '删除纪念日',
+        };
+        const sharedItems = sharedPhoneActivity.slice(0, 8).map(item => ({
+            t: item.createdAt,
+            label: `${item.actor === 'laoshi' ? '老师' : '小词'} · ${sharedLabels[item.action] || item.action}`,
+        }));
+        const localItems = allSorted.slice(0, 4).map(r => ({ t: r.timestamp, label: `打开${appLabel(r.type)}` }));
+        const items = [...sharedItems, ...localItems].sort((a, b) => a.t - b.t).slice(-6);
+        if (lastTs) items.push({ t: Date.now(), label: '当前查看中' });
+        return items.slice(-6);
     })();
 
     const now = new Date();
