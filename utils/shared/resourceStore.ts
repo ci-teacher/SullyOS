@@ -1,5 +1,6 @@
 import { resolveSharedActor } from './identity';
 import { sharedRequest } from './sharedClient';
+import { mutateSharedOrQueue } from './syncQueue';
 
 export type SharedResourceKind = 'social_post' | 'room_note' | 'anniversary' | 'free_activity';
 
@@ -66,7 +67,7 @@ export async function putSharedResource<T>(
   extra: { mediaId?: string; updatedAt?: number } = {},
 ): Promise<void> {
   const updatedAt = extra.updatedAt || markLocalResourceVersion(kind, id);
-  await sharedRequest(`/v1/resources/${kind}/${encodeURIComponent(id)}`, {
+  await mutateSharedOrQueue(`/v1/resources/${kind}/${encodeURIComponent(id)}`, {
     method: 'PUT',
     body: JSON.stringify({
       id,
@@ -86,7 +87,7 @@ export async function deleteSharedResource(
   scope = '',
 ): Promise<void> {
   const updatedAt = markLocalResourceVersion(kind, id);
-  await sharedRequest(`/v1/resources/${kind}/${encodeURIComponent(id)}`, {
+  await mutateSharedOrQueue(`/v1/resources/${kind}/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     body: JSON.stringify({
       scope,
