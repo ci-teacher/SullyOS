@@ -30,6 +30,16 @@ CREATE TABLE IF NOT EXISTS wake_signals (
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL;
 
+CREATE TABLE IF NOT EXISTS activity (
+  id TEXT PRIMARY KEY,
+  actor TEXT NOT NULL CHECK(actor IN ('xiaoci','laoshi')),
+  action TEXT NOT NULL,
+  target_type TEXT,
+  target_id TEXT,
+  metadata TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activity_created_at ON activity(created_at DESC);
 CREATE TABLE IF NOT EXISTS entries (
   id TEXT PRIMARY KEY,
   author TEXT NOT NULL CHECK(author IN ('xiaoci','laoshi')),
