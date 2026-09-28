@@ -1,5 +1,5 @@
 import { DB } from '../db';
-import type { Anniversary, DiaryEntry, GalleryImage, RoomNote, SocialPost } from '../../types';
+import type { Anniversary, DiaryEntry, GalleryImage, RoomNote, SocialPost, XhsActivityRecord } from '../../types';
 import { deleteSharedDiary, fetchSharedDiaries, mergeDiaryCopies, saveSharedDiary } from './journal';
 import { recordSharedActivity } from './activity';
 import {
@@ -178,6 +178,50 @@ export function installSharedPhoneFoundation(): void {
       deleteSharedResource('anniversary', id),
       recordSharedActivity('anniversary.delete', 'anniversary', id),
     ]);
+  };
+
+  // ── Free roam / autonomous activity history ─────────────────
+  const originalGetXhsActivities = DB.getXhsActivities.bind(DB);
+  const originalGetAllXhsActivities = DB.getAllXhsActivities.bind(DB);
+  const originalSaveXhsActivity = DB.saveXhsActivity.bind(DB);
+  const originalDeleteXhsActivity = DB.deleteXhsActivity.bind(DB);
+  const originalClearXhsActivities = DB.clearXhsActivities.bind(DB);
+
+  DB.getXhsActivities = async (characterId: string, limit?: number): Promise<XhsActivityRecord[]> => {
+    const local = await originalGetXhsActivities(characterId);
+    const remote = await listSharedResources<XhsActivityRecord>('free_activity', characterId);
+    const merged = await reconcileRemoteRecords('free_activity', local, remote, originalSaveXhsActivity, originalDeleteXhsActivity);
+    const sorted = merged.sort((a, b) => b.timestamp - a.timestamp);
+    return limit ? sorted.slice(0, limit) : sorted;
+  };
+
+  DB.getAllXhsActivities = async (): Promise<XhsActivityRecord[]> => {
+    const local = await originalGetAllXhsActivities();
+    const remote = await listSharedResources<XhsActivityRecord>('free_activity');
+    return await reconcileRemoteRecords('free_activity', local, remote, originalSaveXhsActivity, originalDeleteXhsActivity);
+  };
+
+  DB.saveXhsActivity = async (activity: XhsActivityRecord): Promise<void> => {
+    await originalSaveXhsActivity(activity);
+    const updatedAt = markLocalResourceVersion('free_activity', activity.id);
+    void Promise.all([
+      putSharedResource('free_activity', activity.id, activity, activity.characterId, { updatedAt }),
+      recordSharedActivity('free_activity.save', 'free_activity', activity.id, {
+        charId: activity.characterId,
+        actionType: activity.actionType,
+      }),
+    ]);
+  };
+
+  DB.deleteXhsActivity = async (id: string): Promise<void> => {
+    await originalDeleteXhsActivity(id);
+    void deleteSharedResource('free_activity', id);
+  };
+
+  DB.clearXhsActivities = async (characterId: string): Promise<void> => {
+    const existing = await originalGetXhsActivities(characterId);
+    await originalClearXhsActivities(characterId);
+    void Promise.all(existing.map(item => deleteSharedResource('free_activity', item.id, characterId)));
   };
 
   // ── Gallery + actual media bytes ─────────────────────────────
