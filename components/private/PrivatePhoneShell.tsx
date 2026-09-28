@@ -4,7 +4,6 @@ import { AppID } from '../../types';
 import { useOS } from '../../context/OSContext';
 import PrivateLauncher from './PrivateLauncher';
 import PrivateSettings from './PrivateSettings';
-import PrivateDesignLab from './PrivateDesignLab';
 
 const Character = React.lazy(() => import('../../apps/Character'));
 const Chat = React.lazy(() => import('../../apps/Chat'));
@@ -50,8 +49,6 @@ const Loading = () => (
 );
 
 const PrivatePhoneShell: React.FC = () => {
-  const designLab = window.location.pathname === '/design-lab';
-
   const {
     activeApp,
     closeApp,
@@ -66,8 +63,6 @@ const PrivatePhoneShell: React.FC = () => {
   useEffect(() => {
     if (isLocked) unlock();
   }, [isLocked, unlock]);
-
-  if (designLab) return <PrivateDesignLab />;
 
   if (!isDataLoaded) {
     return <div className="h-full w-full bg-[#f5f2ee]" />;
