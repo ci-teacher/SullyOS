@@ -1,6 +1,7 @@
 import type { DiaryEntry } from '../../types';
 import { resolveSharedActor } from './identity';
 import { sharedRequest } from './sharedClient';
+import { mutateSharedOrQueue } from './syncQueue';
 import type { SharedDiaryRecord, SharedListResponse } from './types';
 
 function normalizeRecords(payload: SharedListResponse<SharedDiaryRecord> | SharedDiaryRecord[] | null): SharedDiaryRecord[] {
@@ -46,14 +47,14 @@ export async function saveSharedDiary(diary: DiaryEntry): Promise<void> {
     deleted: false,
   };
 
-  await sharedRequest(`/v1/diaries/${encodeURIComponent(diary.id)}`, {
+  await mutateSharedOrQueue(`/v1/diaries/${encodeURIComponent(diary.id)}`, {
     method: 'PUT',
     body: JSON.stringify(record),
   });
 }
 
 export async function deleteSharedDiary(id: string): Promise<void> {
-  await sharedRequest(`/v1/diaries/${encodeURIComponent(id)}`, {
+  await mutateSharedOrQueue(`/v1/diaries/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     body: JSON.stringify({ updatedBy: resolveSharedActor(), updatedAt: Date.now() }),
   });
