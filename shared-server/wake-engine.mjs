@@ -24,10 +24,65 @@ CREATE TABLE IF NOT EXISTS wake_signals (
   payload TEXT,
   created_at INTEGER NOT NULL,
   expires_at INTEGER,
-  consumed_at INTEGER
+  consumed_at INTEGER,
+  dedupe_key TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS entries (
+  id TEXT PRIMARY KEY,
+  author TEXT NOT NULL CHECK(author IN ('xiaoci','laoshi')),
+  app_type TEXT NOT NULL,
+  title TEXT,
+  body TEXT NOT NULL DEFAULT '',
+  payload TEXT,
+  visibility TEXT NOT NULL DEFAULT 'shared',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  source TEXT NOT NULL,
+  payload TEXT,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER,
+  consumed_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  title TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  payload TEXT NOT NULL DEFAULT '{}',
+  updated_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS shared_resources (
+  kind TEXT NOT NULL,
+  id TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT '',
+  payload TEXT,
+  media_id TEXT,
+  updated_by TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY(kind, id)
+);
 `);
+
+const wakeColumns = db.prepare('PRAGMA table_info(wake_signals)').all();
+if (!wakeColumns.some(row => row.name === 'dedupe_key')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN dedupe_key TEXT');
+}
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL");
 
 const qPending = db.prepare("SELECT * FROM wake_signals WHERE status='pending' AND (expires_at IS NULL OR expires_at > ?) ORDER BY priority DESC, created_at ASC LIMIT 1");
 const qLastWake = db.prepare("SELECT MAX(created_at) AS t FROM wake_signals");
@@ -39,8 +94,35 @@ WHERE actor='xiaoci' AND created_at > ?
 ORDER BY created_at DESC
 LIMIT 12
 `);
-const qInsert = db.prepare('INSERT INTO wake_signals(id, reason, priority, status, payload, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+const qInsert = db.prepare('INSERT OR IGNORE INTO wake_signals(id, reason, priority, status, payload, created_at, expires_at, dedupe_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 const qExpire = db.prepare("UPDATE wake_signals SET status='expired' WHERE status='pending' AND expires_at IS NOT NULL AND expires_at <= ?");
+const qNewEntries = db.prepare(`
+SELECT id, app_type, title, body, payload, updated_at
+FROM entries
+WHERE author='xiaoci' AND deleted=0 AND updated_at > ?
+ORDER BY updated_at DESC
+LIMIT 12
+`);
+const qNewEvents = db.prepare(`
+SELECT id, type, source, payload, created_at, expires_at
+FROM events
+WHERE consumed_at IS NULL
+  AND created_at > ?
+  AND (expires_at IS NULL OR expires_at > ?)
+ORDER BY created_at DESC
+LIMIT 12
+`);
+const qUpdatedSessions = db.prepare(`
+SELECT id, kind, title, status, payload, updated_at
+FROM sessions
+WHERE updated_by='xiaoci'
+  AND deleted=0
+  AND status IN ('active','paused')
+  AND updated_at > ?
+ORDER BY updated_at DESC
+LIMIT 8
+`);
+const qAnniversaries = db.prepare("SELECT id, payload, updated_at FROM shared_resources WHERE kind='anniversary' AND deleted=0");
 
 function localHour(now = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -62,7 +144,26 @@ function parseJson(value) {
   try { return JSON.parse(value); } catch { return undefined; }
 }
 
-function createSignal(reason, priority, payload, now) {
+function localIsoDate(timestamp) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(timestamp));
+  const get = type => parts.find(part => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+function entryPriority(type) {
+  if (type === 'letter') return 92;
+  if (type === 'calendar') return 78;
+  if (type === 'memory') return 65;
+  if (type === 'special') return 62;
+  return 50;
+}
+
+function createSignal(reason, priority, payload, now, dedupeKey = null) {
   const id = randomUUID();
   qInsert.run(
     id,
@@ -72,8 +173,9 @@ function createSignal(reason, priority, payload, now) {
     payload ? JSON.stringify(payload) : null,
     now,
     now + SIGNAL_TTL_MS,
+    dedupeKey,
   );
-  console.log(`[wake-engine] signal ${reason} priority=${priority} id=${id}`);
+  console.log(`[wake-engine] signal ${reason} priority=${priority} id=${id}${dedupeKey ? ` dedupe=${dedupeKey}` : ''}`);
 }
 
 function probabilityForElapsed(elapsedMs) {
