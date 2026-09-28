@@ -110,9 +110,11 @@ CREATE TABLE IF NOT EXISTS wake_signals (
   payload TEXT,
   created_at INTEGER NOT NULL,
   expires_at INTEGER,
-  consumed_at INTEGER
+  consumed_at INTEGER,
+  dedupe_key TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL;
 `);
 
 function ensureColumn(table, column, definition) {
@@ -125,6 +127,8 @@ function ensureColumn(table, column, definition) {
 
 // Forward-only lightweight migrations for databases created by earlier private builds.
 ensureColumn('diaries', 'deleted', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('wake_signals', 'dedupe_key', 'TEXT');
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL");
 
 const qDiaryList = db.prepare('SELECT id, payload, updated_by, updated_at, deleted FROM diaries WHERE char_id = ? ORDER BY date DESC');
 const qDiaryUpsert = db.prepare(`
@@ -207,8 +211,10 @@ ON CONFLICT(id) DO UPDATE SET
 const qActivityInsert = db.prepare('INSERT OR REPLACE INTO activity(id, actor, action, target_type, target_id, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
 const qRecentActivity = db.prepare('SELECT * FROM activity ORDER BY created_at DESC LIMIT ?');
 const qPendingWake = db.prepare("SELECT * FROM wake_signals WHERE status='pending' AND (expires_at IS NULL OR expires_at > ?) ORDER BY priority DESC, created_at ASC LIMIT 1");
-const qWakeInsert = db.prepare('INSERT INTO wake_signals(id, reason, priority, status, payload, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+const qWakeInsert = db.prepare('INSERT OR IGNORE INTO wake_signals(id, reason, priority, status, payload, created_at, expires_at, dedupe_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 const qWakeConsume = db.prepare("UPDATE wake_signals SET status='consumed', consumed_at=? WHERE id=? AND status IN ('pending','processing')");
+const qWakeClaim = db.prepare("UPDATE wake_signals SET status='processing' WHERE id=? AND status='pending'");
+const qWakeFail = db.prepare("UPDATE wake_signals SET status='failed', consumed_at=? WHERE id=? AND status IN ('pending','processing')");
 
 function corsHeaders() {
   return {
@@ -296,6 +302,7 @@ function rowToWake(row) {
     createdAt: row.created_at,
     expiresAt: row.expires_at || undefined,
     consumedAt: row.consumed_at || undefined,
+    dedupeKey: row.dedupe_key || undefined,
   };
 }
 
@@ -669,6 +676,14 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, teacherHome());
     }
 
+    if (req.method === 'POST' && path === '/v1/wake/claim') {
+      const now = Date.now();
+      const row = qPendingWake.get(now);
+      if (!row) return send(res, 200, { wake: null });
+      const result = qWakeClaim.run(row.id);
+      if (!result.changes) return send(res, 409, { error: 'wake already claimed' });
+      return send(res, 200, { wake: rowToWake({ ...row, status: 'processing' }) });
+    }
     if (req.method === 'GET' && path === '/v1/wake/next') {
       return send(res, 200, { wake: rowToWake(qPendingWake.get(Date.now())) });
     }
@@ -686,6 +701,7 @@ const server = http.createServer(async (req, res) => {
         body.payload ? JSON.stringify(body.payload) : null,
         now,
         expiresAt,
+        body.dedupeKey ? String(body.dedupeKey) : null,
       );
       return send(res, 201, { ok: true, id });
     }
@@ -693,6 +709,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && /^\/v1\/wake\/[^/]+\/consume$/.test(path)) {
       const id = decodeURIComponent(path.split('/')[3]);
       qWakeConsume.run(Date.now(), id);
+      return send(res, 200, { ok: true });
+    }
+
+    if (req.method === 'POST' && /^\/v1\/wake\/[^/]+\/fail$/.test(path)) {
+      const id = decodeURIComponent(path.split('/')[3]);
+      qWakeFail.run(Date.now(), id);
       return send(res, 200, { ok: true });
     }
 
