@@ -11,6 +11,7 @@ import { installWakeListener } from './utils/proactivePushConfig';
 import { initAnalytics } from './utils/analytics';
 import { Capacitor } from '@capacitor/core';
 import { installSharedPhoneFoundation } from './utils/shared/installSharedPhone';
+import './components/private/private-theme.css';
 
 installSharedPhoneFoundation();
 
