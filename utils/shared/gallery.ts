@@ -76,7 +76,7 @@ export async function saveSharedGalleryImage(image: GalleryImage): Promise<void>
   if (blob) {
     mediaId = `gallery-${image.id}`;
     const uploaded = await sharedUploadBlob(`/v1/media/${encodeURIComponent(mediaId)}`, blob);
-    if (!uploaded) mediaId = undefined;
+    if (!uploaded) return;
   }
 
   await putSharedResource('gallery', image.id, image, image.charId, { mediaId, updatedAt });
