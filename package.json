@@ -13,7 +13,10 @@
     "build:workers": "node scripts/build-workers.mjs",
     "test": "vitest",
     "test:run": "vitest run",
-    "build:chat-preview": "node scripts/build-chat-preview-css.mjs"
+    "build:chat-preview": "node scripts/build-chat-preview-css.mjs",
+    "shared:server": "node shared-server/server.mjs",
+    "shared:wake": "node shared-server/wake-engine.mjs",
+    "shared:wake:once": "node shared-server/wake-engine.mjs --once"
   },
   "dependencies": {
     "@capacitor-community/speech-recognition": "^6.0.1",
