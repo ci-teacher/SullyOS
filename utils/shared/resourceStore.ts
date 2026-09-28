@@ -1,7 +1,7 @@
 import { resolveSharedActor } from './identity';
 import { sharedRequest } from './sharedClient';
 
-export type SharedResourceKind = 'social_post' | 'room_note' | 'anniversary';
+export type SharedResourceKind = 'social_post' | 'room_note' | 'anniversary' | 'free_activity';
 
 export interface SharedResourceRecord<T> {
   id: string;
