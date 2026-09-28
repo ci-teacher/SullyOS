@@ -413,6 +413,66 @@ function safeMediaPath(id) {
   return resolve(MEDIA_DIR, hash);
 }
 
+function unifiedTimeline(limit = 50) {
+  const perSource = Math.max(20, Math.min(100, limit * 2));
+  const items = [];
+
+  for (const row of db.prepare('SELECT id, payload, updated_by, updated_at FROM diaries WHERE deleted=0 ORDER BY updated_at DESC LIMIT ?').all(perSource)) {
+    items.push({
+      id: `diary:${row.id}`,
+      source: 'diary',
+      actor: row.updated_by,
+      occurredAt: row.updated_at,
+      payload: parseRowJson(row.payload, {}),
+    });
+  }
+
+  for (const row of db.prepare('SELECT * FROM entries WHERE deleted=0 ORDER BY updated_at DESC LIMIT ?').all(perSource)) {
+    const entry = rowToEntry(row);
+    items.push({
+      id: `entry:${row.id}`,
+      source: entry.appType,
+      actor: entry.author,
+      occurredAt: entry.updatedAt,
+      payload: entry,
+    });
+  }
+
+  for (const row of db.prepare('SELECT * FROM shared_resources WHERE deleted=0 ORDER BY updated_at DESC LIMIT ?').all(perSource)) {
+    const resource = rowToResource(row);
+    items.push({
+      id: `resource:${row.kind}:${row.id}`,
+      source: row.kind,
+      actor: row.updated_by,
+      occurredAt: row.updated_at,
+      payload: resource,
+    });
+  }
+
+  return items.sort((a, b) => b.occurredAt - a.occurredAt).slice(0, limit);
+}
+
+function searchSharedContent(query, limit = 40) {
+  const q = String(query || '').trim();
+  if (!q) return [];
+  const like = `%${q.replaceAll('%', '\\%').replaceAll('_', '\\_')}%`;
+  const each = Math.max(10, Math.min(50, limit));
+  const items = [];
+
+  for (const row of db.prepare("SELECT * FROM entries WHERE deleted=0 AND (title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\' OR payload LIKE ? ESCAPE '\\') ORDER BY updated_at DESC LIMIT ?").all(like, like, like, each)) {
+    items.push({ id: `entry:${row.id}`, source: row.app_type, occurredAt: row.updated_at, payload: rowToEntry(row) });
+  }
+
+  for (const row of db.prepare("SELECT id, payload, updated_by, updated_at FROM diaries WHERE deleted=0 AND payload LIKE ? ESCAPE '\\' ORDER BY updated_at DESC LIMIT ?").all(like, each)) {
+    items.push({ id: `diary:${row.id}`, source: 'diary', actor: row.updated_by, occurredAt: row.updated_at, payload: parseRowJson(row.payload, {}) });
+  }
+
+  for (const row of db.prepare("SELECT * FROM shared_resources WHERE deleted=0 AND payload LIKE ? ESCAPE '\\' ORDER BY updated_at DESC LIMIT ?").all(like, each)) {
+    items.push({ id: `resource:${row.kind}:${row.id}`, source: row.kind, actor: row.updated_by, occurredAt: row.updated_at, payload: rowToResource(row) });
+  }
+
+  return items.sort((a, b) => b.occurredAt - a.occurredAt).slice(0, limit);
+}
 function teacherHome() {
   const now = Date.now();
   const diaryCount = db.prepare('SELECT COUNT(*) AS n FROM diaries WHERE deleted=0').get().n;
@@ -672,6 +732,16 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { items: qRecentActivity.all(limit).map(rowToActivity) });
     }
 
+    if (req.method === 'GET' && path === '/v1/timeline') {
+      const limit = clampLimit(url.searchParams.get('limit'), 50, 200);
+      return send(res, 200, { items: unifiedTimeline(limit) });
+    }
+
+    if (req.method === 'GET' && path === '/v1/search') {
+      const query = url.searchParams.get('q') || '';
+      const limit = clampLimit(url.searchParams.get('limit'), 40, 100);
+      return send(res, 200, { items: searchSharedContent(query, limit) });
+    }
     if (req.method === 'GET' && path === '/v1/teacher/home') {
       return send(res, 200, teacherHome());
     }
