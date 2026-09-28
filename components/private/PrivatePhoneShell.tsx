@@ -111,7 +111,7 @@ const PrivatePhoneShell: React.FC = () => {
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#f5f2ee] text-[#221d1a]">
+    <div className="xiaoci-private relative h-full w-full overflow-hidden bg-[#fff8e8] text-[#2c2220]">
       <Suspense fallback={<Loading />}>
         <div key={activeApp} className="h-full w-full">
           {renderApp()}
