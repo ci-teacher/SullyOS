@@ -312,6 +312,95 @@ function rowToResource(row) {
   };
 }
 
+function clampLimit(value, fallback = 50, max = 200) {
+  return Math.min(max, Math.max(1, Number(value || fallback)));
+}
+
+function rowToEntry(row) {
+  return {
+    id: row.id,
+    author: row.author,
+    appType: row.app_type,
+    title: row.title || undefined,
+    body: row.body || '',
+    payload: parseRowJson(row.payload, undefined),
+    visibility: row.visibility,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deleted: Boolean(row.deleted),
+  };
+}
+
+function rowToEvent(row) {
+  return {
+    id: row.id,
+    type: row.type,
+    source: row.source,
+    payload: parseRowJson(row.payload, undefined),
+    createdAt: row.created_at,
+    expiresAt: row.expires_at || undefined,
+    consumedAt: row.consumed_at || undefined,
+  };
+}
+
+function rowToSession(row) {
+  return {
+    id: row.id,
+    kind: row.kind,
+    title: row.title || undefined,
+    status: row.status,
+    payload: parseRowJson(row.payload, {}),
+    updatedBy: row.updated_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deleted: Boolean(row.deleted),
+  };
+}
+
+function listEntries(url) {
+  const where = ['deleted=0'];
+  const values = [];
+  const appType = url.searchParams.get('appType');
+  const visibility = url.searchParams.get('visibility');
+  if (appType) { where.push('app_type=?'); values.push(appType); }
+  if (visibility) { where.push('visibility=?'); values.push(visibility); }
+  const limit = clampLimit(url.searchParams.get('limit'), 50);
+  values.push(limit);
+  const sql = `SELECT * FROM entries WHERE ${where.join(' AND ')} ORDER BY updated_at DESC LIMIT ?`;
+  return db.prepare(sql).all(...values).map(rowToEntry);
+}
+
+function listEvents(url) {
+  const where = ['1=1'];
+  const values = [];
+  const type = url.searchParams.get('type');
+  const source = url.searchParams.get('source');
+  const pending = url.searchParams.get('pending') === '1';
+  if (type) { where.push('type=?'); values.push(type); }
+  if (source) { where.push('source=?'); values.push(source); }
+  if (pending) {
+    where.push('consumed_at IS NULL');
+    where.push('(expires_at IS NULL OR expires_at > ?)');
+    values.push(Date.now());
+  }
+  const limit = clampLimit(url.searchParams.get('limit'), 50);
+  values.push(limit);
+  const sql = `SELECT * FROM events WHERE ${where.join(' AND ')} ORDER BY created_at DESC LIMIT ?`;
+  return db.prepare(sql).all(...values).map(rowToEvent);
+}
+
+function listSessions(url) {
+  const where = ['deleted=0'];
+  const values = [];
+  const kind = url.searchParams.get('kind');
+  const status = url.searchParams.get('status');
+  if (kind) { where.push('kind=?'); values.push(kind); }
+  if (status) { where.push('status=?'); values.push(status); }
+  const limit = clampLimit(url.searchParams.get('limit'), 50);
+  values.push(limit);
+  const sql = `SELECT * FROM sessions WHERE ${where.join(' AND ')} ORDER BY updated_at DESC LIMIT ?`;
+  return db.prepare(sql).all(...values).map(rowToSession);
+}
 function safeMediaPath(id) {
   const hash = createHash('sha256').update(id).digest('hex');
   return resolve(MEDIA_DIR, hash);
