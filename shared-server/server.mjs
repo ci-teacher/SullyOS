@@ -657,6 +657,13 @@ const server = http.createServer(async (req, res) => {
           }
           qMediaDelete.run(previous.media_id);
         }
+        if (!result.changes && body.mediaId && body.mediaId !== previous?.media_id) {
+          const staleMedia = qMediaGet.get(String(body.mediaId));
+          if (staleMedia?.file_path && existsSync(staleMedia.file_path)) {
+            try { unlinkSync(staleMedia.file_path); } catch {}
+          }
+          qMediaDelete.run(String(body.mediaId));
+        }
         return send(res, 200, { ok: true, stale: !result.changes, updatedAt });
       }
 
