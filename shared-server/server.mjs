@@ -73,7 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_events_pending ON events(consumed_at, expires_at,
 
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
-  kind TEXT NOT NULL CHECK(kind IN ('cedar','coc','game')),
+  kind TEXT NOT NULL CHECK(kind IN ('cedar','coc','game','reading','movie','listening')),
   title TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','paused','completed','archived')),
   payload TEXT NOT NULL DEFAULT '{}',
@@ -666,7 +666,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'PUT' && path.startsWith('/v1/sessions/')) {
       const id = decodeURIComponent(path.slice('/v1/sessions/'.length));
       const body = await readJson(req);
-      if (!id || String(body.id || '') !== id || !['cedar','coc','game'].includes(body.kind)) {
+      if (!id || String(body.id || '') !== id || !['cedar','coc','game','reading','movie','listening'].includes(body.kind)) {
         return send(res, 400, { error: 'invalid session' });
       }
       const status = ['active','paused','completed','archived'].includes(body.status) ? body.status : 'active';
