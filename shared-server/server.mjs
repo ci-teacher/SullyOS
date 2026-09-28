@@ -44,6 +44,45 @@ CREATE TABLE IF NOT EXISTS shared_resources (
 );
 CREATE INDEX IF NOT EXISTS idx_resources_kind_scope ON shared_resources(kind, scope, updated_at DESC);
 
+CREATE TABLE IF NOT EXISTS entries (
+  id TEXT PRIMARY KEY,
+  author TEXT NOT NULL CHECK(author IN ('xiaoci','laoshi')),
+  app_type TEXT NOT NULL,
+  title TEXT,
+  body TEXT NOT NULL DEFAULT '',
+  payload TEXT,
+  visibility TEXT NOT NULL DEFAULT 'shared' CHECK(visibility IN ('shared','xiaoci','laoshi')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_entries_type_updated ON entries(app_type, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_entries_author_updated ON entries(author, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  source TEXT NOT NULL,
+  payload TEXT,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER,
+  consumed_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_events_type_created ON events(type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_pending ON events(consumed_at, expires_at, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL CHECK(kind IN ('cedar','coc','game')),
+  title TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','paused','completed','archived')),
+  payload TEXT NOT NULL DEFAULT '{}',
+  updated_by TEXT NOT NULL CHECK(updated_by IN ('xiaoci','laoshi')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_kind_status ON sessions(kind, status, updated_at DESC);
 CREATE TABLE IF NOT EXISTS media (
   id TEXT PRIMARY KEY,
   mime TEXT NOT NULL,
@@ -89,15 +128,8 @@ ensureColumn('diaries', 'deleted', 'INTEGER NOT NULL DEFAULT 0');
 
 const qDiaryList = db.prepare('SELECT id, payload, updated_by, updated_at, deleted FROM diaries WHERE char_id = ? ORDER BY date DESC');
 const qDiaryUpsert = db.prepare(`
-INSERT INTO diaries(id, char_id, date, payload, updated_by, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
-ON CONFLICT(id) DO UPDATE SET
-  char_id=excluded.char_id,
-  date=excluded.date,
-  payload=excluded.payload,
-  updated_by=excluded.updated_by,
-  updated_at=excluded.updated_at,
-  deleted=0
+INSERT OR REPLACE INTO diaries(id, char_id, date, payload, updated_by, updated_at, deleted)
+VALUES (?, ?, ?, ?, ?, ?, 0)
 `);
 const qDiaryGet = db.prepare('SELECT * FROM diaries WHERE id = ?');
 const qDiaryTombstone = db.prepare("UPDATE diaries SET payload=NULL, updated_by=?, updated_at=?, deleted=1 WHERE id=?");
@@ -125,6 +157,42 @@ ON CONFLICT(kind, id) DO UPDATE SET
   deleted=1
 `);
 
+const qEntryGet = db.prepare('SELECT * FROM entries WHERE id = ?');
+const qEntryUpsert = db.prepare(`
+INSERT INTO entries(id, author, app_type, title, body, payload, visibility, created_at, updated_at, deleted)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+ON CONFLICT(id) DO UPDATE SET
+  author=excluded.author,
+  app_type=excluded.app_type,
+  title=excluded.title,
+  body=excluded.body,
+  payload=excluded.payload,
+  visibility=excluded.visibility,
+  updated_at=excluded.updated_at,
+  deleted=0
+`);
+const qEntryTombstone = db.prepare('UPDATE entries SET deleted=1, updated_at=? WHERE id=?');
+
+const qEventInsert = db.prepare(`
+INSERT OR REPLACE INTO events(id, type, source, payload, created_at, expires_at, consumed_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+`);
+const qEventConsume = db.prepare('UPDATE events SET consumed_at=? WHERE id=?');
+
+const qSessionGet = db.prepare('SELECT * FROM sessions WHERE id = ?');
+const qSessionUpsert = db.prepare(`
+INSERT INTO sessions(id, kind, title, status, payload, updated_by, created_at, updated_at, deleted)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+ON CONFLICT(id) DO UPDATE SET
+  kind=excluded.kind,
+  title=excluded.title,
+  status=excluded.status,
+  payload=excluded.payload,
+  updated_by=excluded.updated_by,
+  updated_at=excluded.updated_at,
+  deleted=0
+`);
+const qSessionTombstone = db.prepare('UPDATE sessions SET deleted=1, updated_by=?, updated_at=? WHERE id=?');
 const qMediaGet = db.prepare('SELECT * FROM media WHERE id = ?');
 const qMediaUpsert = db.prepare(`
 INSERT INTO media(id, mime, file_path, size, updated_at)
