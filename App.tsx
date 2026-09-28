@@ -12,8 +12,11 @@ import ChatBroadcast from './components/ChatBroadcast';
 import { isIOSStandaloneWebApp } from './utils/iosStandalone';
 import { installDevDebugLifecycleCapture } from './utils/devDebug';
 import TeacherHomeGate from './components/shared/TeacherHomeGate';
+import PrivatePhoneShell from './components/private/PrivatePhoneShell';
 
 const App: React.FC = () => {
+  const sharedPhoneMode = import.meta.env.VITE_SHARED_PHONE_MODE === 'true';
+
   React.useEffect(() => {
     // 常驻监听前后台 / 焦点 / 网络事件；抓不抓由 devDebug 的 lifecycle 类勾选决定
     installDevDebugLifecycleCapture();
@@ -39,8 +42,8 @@ const App: React.FC = () => {
         >
           <OSProvider>
             <MusicProvider>
-              <PhoneShell />
-              <TeacherHomeGate />
+              {sharedPhoneMode ? <PrivatePhoneShell /> : <PhoneShell />}
+              {sharedPhoneMode && <TeacherHomeGate />}
             </MusicProvider>
             {/* 挂在 Provider 里面才能直接读 characters（省掉轮询 IndexedDB），
                 面板自身用 portal 渲染到 body，绕开上面那层 transform 对 fixed 定位的影响。 */}
