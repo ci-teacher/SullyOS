@@ -90,3 +90,34 @@ export async function sharedRequestBlob(path: string): Promise<Blob | null> {
     return null;
   }
 }
+
+
+export async function sharedMutation(
+  path: string,
+  options: SharedRequestOptions = {},
+): Promise<boolean> {
+  if (!isSharedApiEnabled()) return false;
+
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? 5000;
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const headers = new Headers(options.headers || {});
+    if (!headers.has('Content-Type') && options.body) headers.set('Content-Type', 'application/json');
+    if (SHARED_API_TOKEN) headers.set('Authorization', `Bearer ${SHARED_API_TOKEN}`);
+
+    const response = await fetch(`${SHARED_API_BASE}${path.startsWith('/') ? path : `/${path}`}`, {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal,
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.warn('[SharedPhone] mutation failed.', error);
+    return false;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
