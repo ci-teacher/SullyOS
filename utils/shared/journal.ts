@@ -17,7 +17,7 @@ export function mergeDiaryCopies(local: DiaryEntry[], remote: SharedDiaryRecord[
     const diary = record.diary;
     if (record.deleted || !diary) {
       for (const [key, existing] of byDay) {
-        if (existing.id === (diary?.id || '') && (existing.timestamp || 0) <= record.updatedAt) byDay.delete(key);
+        if (existing.id === record.id && (existing.timestamp || 0) <= record.updatedAt) byDay.delete(key);
       }
       continue;
     }
@@ -41,6 +41,7 @@ export async function fetchSharedDiaryRecords(charId: string): Promise<SharedDia
 export async function saveSharedDiary(diary: DiaryEntry): Promise<void> {
   const now = Date.now();
   const record: SharedDiaryRecord = {
+    id: diary.id,
     diary: { ...diary, timestamp: now },
     updatedBy: resolveSharedActor(),
     updatedAt: now,
