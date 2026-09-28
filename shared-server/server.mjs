@@ -514,6 +514,24 @@ function teacherHome() {
     .map(rowToEntry);
   const activeSessions = db.prepare("SELECT * FROM sessions WHERE deleted=0 AND status IN ('active','paused') ORDER BY updated_at DESC LIMIT 8").all()
     .map(rowToSession);
+  const freshBaseline = Number(laoshiActivity || 0);
+  const freshEntryCounts = Object.fromEntries(
+    db.prepare("SELECT app_type, COUNT(*) AS n FROM entries WHERE deleted=0 AND author='xiaoci' AND updated_at > ? GROUP BY app_type").all(freshBaseline)
+      .map(row => [row.app_type, row.n]),
+  );
+  const freshResourceCounts = Object.fromEntries(
+    db.prepare("SELECT kind, COUNT(*) AS n FROM shared_resources WHERE deleted=0 AND updated_by='xiaoci' AND updated_at > ? GROUP BY kind").all(freshBaseline)
+      .map(row => [row.kind, row.n]),
+  );
+  const randomMemoryRow = db.prepare("SELECT * FROM entries WHERE deleted=0 AND app_type='memory' ORDER BY RANDOM() LIMIT 1").get();
+  const randomMemory = randomMemoryRow ? rowToEntry(randomMemoryRow) : null;
+  const upcomingCalendar = db.prepare(
+    "SELECT * FROM entries WHERE deleted=0 AND app_type='calendar' AND CAST(json_extract(payload, '$.startsAt') AS INTEGER) >= ? ORDER BY CAST(json_extract(payload, '$.startsAt') AS INTEGER) ASC LIMIT 8"
+  ).all(now).map(rowToEntry);
+  const recentLetters = db.prepare("SELECT * FROM entries WHERE deleted=0 AND app_type='letter' ORDER BY updated_at DESC LIMIT 6").all()
+    .map(rowToEntry);
+  const recentMemories = db.prepare("SELECT * FROM entries WHERE deleted=0 AND app_type='memory' ORDER BY updated_at DESC LIMIT 6").all()
+    .map(rowToEntry);
 
   return {
     now,
@@ -525,6 +543,14 @@ function teacherHome() {
     recentDiaries,
     recentResources,
     recentEntries,
+    recentLetters,
+    recentMemories,
+    upcomingCalendar,
+    randomMemory,
+    freshCounts: {
+      entries: freshEntryCounts,
+      resources: freshResourceCounts,
+    },
     activeSessions,
     pendingWake,
   };
