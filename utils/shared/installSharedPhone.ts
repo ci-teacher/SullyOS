@@ -1,5 +1,5 @@
 import { DB } from '../db';
-import type { Anniversary, DiaryEntry, GalleryImage, RoomNote, SocialPost, XhsActivityRecord } from '../../types';
+import type { Anniversary, DiaryEntry, GalleryImage, RoomNote, RoomTodo, SocialPost, XhsActivityRecord } from '../../types';
 import { deleteSharedDiary, fetchSharedDiaryRecords, mergeDiaryCopies, saveSharedDiary } from './journal';
 import { recordSharedActivity } from './activity';
 import {
@@ -159,6 +159,36 @@ export function installSharedPhoneFoundation(): void {
     void Promise.all([
       deleteSharedResource('room_note', id),
       recordSharedActivity('note.delete', 'room_note', id),
+    ]);
+  };
+
+  // ── Room daily todos ────────────────────────────────────────
+  const originalGetRoomTodo = DB.getRoomTodo.bind(DB);
+  const originalSaveRoomTodo = DB.saveRoomTodo.bind(DB);
+
+  DB.getRoomTodo = async (charId: string, date: string): Promise<RoomTodo | null> => {
+    const local = await originalGetRoomTodo(charId, date);
+    const id = `${charId}_${date}`;
+    const remote = await listSharedResources<RoomTodo>('room_todo', charId);
+    const record = remote.find(item => item.id === id);
+
+    if (!record) return local;
+    const localVersion = getLocalResourceVersion('room_todo', id);
+    if (record.updatedAt < localVersion) return local;
+
+    markLocalResourceVersion('room_todo', id, record.updatedAt);
+    if (record.deleted || !record.payload) return null;
+
+    await originalSaveRoomTodo(record.payload);
+    return record.payload;
+  };
+
+  DB.saveRoomTodo = async (todo: RoomTodo): Promise<void> => {
+    await originalSaveRoomTodo(todo);
+    const updatedAt = markLocalResourceVersion('room_todo', todo.id);
+    void Promise.all([
+      putSharedResource('room_todo', todo.id, todo, todo.charId, { updatedAt }),
+      recordSharedActivity('room.todo.save', 'room_todo', todo.id, { charId: todo.charId, date: todo.date }),
     ]);
   };
 
