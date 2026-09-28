@@ -21,3 +21,51 @@ export interface SharedDiaryRecord {
 export interface SharedListResponse<T> {
   items: T[];
 }
+
+export type SharedEntryType =
+  | 'letter'
+  | 'memory'
+  | 'calendar'
+  | 'note'
+  | 'timeline'
+  | 'special';
+
+export type SharedVisibility = 'shared' | 'xiaoci' | 'laoshi';
+
+export interface SharedEntry {
+  id: string;
+  author: SharedActor;
+  appType: SharedEntryType;
+  title?: string;
+  body: string;
+  payload?: Record<string, unknown>;
+  visibility: SharedVisibility;
+  createdAt: number;
+  updatedAt: number;
+  deleted?: boolean;
+}
+
+export interface SharedEvent {
+  id: string;
+  type: string;
+  source: string;
+  payload?: Record<string, unknown>;
+  createdAt: number;
+  expiresAt?: number;
+  consumedAt?: number;
+}
+
+export type SharedSessionKind = 'cedar' | 'coc' | 'game';
+export type SharedSessionStatus = 'active' | 'paused' | 'completed' | 'archived';
+
+export interface SharedSession {
+  id: string;
+  kind: SharedSessionKind;
+  title?: string;
+  status: SharedSessionStatus;
+  payload: Record<string, unknown>;
+  updatedBy: SharedActor;
+  createdAt: number;
+  updatedAt: number;
+  deleted?: boolean;
+}
