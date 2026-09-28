@@ -35,3 +35,45 @@ jobs:
 
       - name: Check wake engine syntax
         run: node --check shared-server/wake-engine.mjs
+
+      - name: Smoke test shared server
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SHARED_PHONE_DB=/tmp/shared-phone-ci.sqlite
+          export SHARED_PHONE_MEDIA_DIR=/tmp/shared-phone-media
+          export PORT=8799
+          export HOST=127.0.0.1
+          rm -f "$SHARED_PHONE_DB" "$SHARED_PHONE_DB-shm" "$SHARED_PHONE_DB-wal"
+          rm -rf "$SHARED_PHONE_MEDIA_DIR"
+          node shared-server/server.mjs > /tmp/shared-phone-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:8799/health >/tmp/shared-health.json; then
+              break
+            fi
+            sleep 0.25
+          done
+
+          curl -fsS http://127.0.0.1:8799/health
+          NOW=$(date +%s%3N)
+
+          curl -fsS -X PUT http://127.0.0.1:8799/v1/entries/ci-letter             -H 'Content-Type: application/json'             -d '{"id":"ci-letter","author":"xiaoci","appType":"letter","title":"CI","body":"hello","visibility":"shared","createdAt":'"$NOW"',"updatedAt":'"$NOW"'}'
+
+          curl -fsS 'http://127.0.0.1:8799/v1/entries?appType=letter'
+
+          curl -fsS -X PUT http://127.0.0.1:8799/v1/sessions/ci-cedar             -H 'Content-Type: application/json'             -d '{"id":"ci-cedar","kind":"cedar","title":"CI game","status":"active","payload":{"roomId":"test"},"updatedBy":"xiaoci","createdAt":'"$NOW"',"updatedAt":'"$NOW"'}'
+
+          curl -fsS 'http://127.0.0.1:8799/v1/sessions?kind=cedar'
+
+          curl -fsS -X POST http://127.0.0.1:8799/v1/wake             -H 'Content-Type: application/json'             -d '{"reason":"ci","priority":1,"dedupeKey":"ci-wake"}'
+
+          curl -fsS -X POST http://127.0.0.1:8799/v1/wake/claim
+
+          kill "$SERVER_PID"
+          wait "$SERVER_PID" || true
+          trap - EXIT
+
+          SHARED_PHONE_DB=/tmp/shared-phone-ci.sqlite node shared-server/wake-engine.mjs --once
