@@ -1,0 +1,113 @@
+
+.xiaoci-private {
+  --xp-red: #d92f4f;
+  --xp-red-deep: #a91735;
+  --xp-cream: #fff8e8;
+  --xp-paper: #fffdf7;
+  --xp-ink: #2c2220;
+  --xp-muted: #8a7770;
+  --xp-pink: #f6b8d2;
+  --xp-lilac: #b9a7ef;
+  --xp-blue: #a9c8f5;
+  --xp-mint: #acd7bd;
+  --xp-yellow: #f4d878;
+  --xp-line: rgba(64, 38, 32, 0.12);
+  --xp-radius-app: 22px;
+  --xp-radius-icon: 19px;
+  font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+  background: var(--xp-cream);
+  color: var(--xp-ink);
+}
+
+.xiaoci-private .xp-serif {
+  font-family: 'Shippori Mincho', 'Noto Sans SC', serif;
+}
+
+.xiaoci-private .xp-dots {
+  background-color: var(--xp-paper);
+  background-image: radial-gradient(circle, rgba(217,47,79,.18) 1.2px, transparent 1.3px);
+  background-size: 11px 11px;
+}
+
+.xiaoci-private .xp-dots-red {
+  background-color: var(--xp-red);
+  background-image: radial-gradient(circle, rgba(255,255,255,.54) 1.2px, transparent 1.3px);
+  background-size: 12px 12px;
+}
+
+.xiaoci-private .xp-grid {
+  background-color: var(--xp-paper);
+  background-image:
+    linear-gradient(rgba(110,140,170,.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110,140,170,.10) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.xiaoci-private .xp-stripe {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      #fff9e9 0,
+      #fff9e9 9px,
+      #f8d6df 9px,
+      #f8d6df 18px
+    );
+}
+
+.xiaoci-private .xp-candy-gradient {
+  background: linear-gradient(135deg, #f7aec8 0%, #c7b2f6 52%, #9fc9f2 100%);
+}
+
+.xiaoci-private .xp-press {
+  transition: transform 120ms ease, filter 120ms ease;
+}
+.xiaoci-private .xp-press:active {
+  transform: scale(.96);
+  filter: saturate(.92);
+}
+
+.xiaoci-private .xp-sticker {
+  border: 1px solid rgba(75,45,40,.13);
+  box-shadow: 0 4px 0 rgba(75,45,40,.06);
+}
+
+.xiaoci-private .xp-tag-number {
+  display: inline-flex;
+  height: 22px;
+  min-width: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--xp-red);
+  color: var(--xp-red-deep);
+  background: #fff;
+  font-family: 'DM Serif Display', serif;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.xiaoci-private .xp-tag-number[data-active="true"] {
+  color: white;
+  background: var(--xp-red);
+  border-color: var(--xp-red);
+}
+
+.xiaoci-private .xp-panel {
+  background: rgba(255,253,247,.96);
+  border: 1px solid var(--xp-line);
+  border-radius: var(--xp-radius-app);
+}
+
+.xiaoci-private button,
+.xiaoci-private [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xiaoci-private *,
+  .xiaoci-private *::before,
+  .xiaoci-private *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
