@@ -25,7 +25,11 @@ CREATE TABLE IF NOT EXISTS wake_signals (
   created_at INTEGER NOT NULL,
   expires_at INTEGER,
   consumed_at INTEGER,
-  dedupe_key TEXT
+  dedupe_key TEXT,
+  claimed_at INTEGER,
+  claim_expires_at INTEGER,
+  resolution TEXT,
+  result_payload TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL;
@@ -92,6 +96,18 @@ const wakeColumns = db.prepare('PRAGMA table_info(wake_signals)').all();
 if (!wakeColumns.some(row => row.name === 'dedupe_key')) {
   db.exec('ALTER TABLE wake_signals ADD COLUMN dedupe_key TEXT');
 }
+if (!wakeColumns.some(row => row.name === 'claimed_at')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN claimed_at INTEGER');
+}
+if (!wakeColumns.some(row => row.name === 'claim_expires_at')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN claim_expires_at INTEGER');
+}
+if (!wakeColumns.some(row => row.name === 'resolution')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN resolution TEXT');
+}
+if (!wakeColumns.some(row => row.name === 'result_payload')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN result_payload TEXT');
+}
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL");
 
 const qPending = db.prepare("SELECT * FROM wake_signals WHERE status='pending' AND (expires_at IS NULL OR expires_at > ?) ORDER BY priority DESC, created_at ASC LIMIT 1");
@@ -106,6 +122,7 @@ LIMIT 12
 `);
 const qInsert = db.prepare('INSERT OR IGNORE INTO wake_signals(id, reason, priority, status, payload, created_at, expires_at, dedupe_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 const qExpire = db.prepare("UPDATE wake_signals SET status='expired' WHERE status='pending' AND expires_at IS NOT NULL AND expires_at <= ?");
+const qRequeueExpiredClaims = db.prepare("UPDATE wake_signals SET status='pending', claimed_at=NULL, claim_expires_at=NULL WHERE status='processing' AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?");
 const qNewEntries = db.prepare(`
 SELECT id, app_type, title, body, payload, updated_at
 FROM entries
@@ -201,6 +218,7 @@ function probabilityForElapsed(elapsedMs) {
 function runOnce() {
   const now = Date.now();
   qExpire.run(now);
+  qRequeueExpiredClaims.run(now);
 
   const hour = localHour(new Date(now));
   if (inQuietHours(hour)) {
