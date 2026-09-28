@@ -1,0 +1,18 @@
+[Unit]
+Description=Xiaoci Shared Phone Wake Engine
+After=network.target xiaoci-phone-api.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/xiaoci-phone
+EnvironmentFile=/var/www/xiaoci-phone/shared-server/.env
+ExecStart=/usr/bin/node /var/www/xiaoci-phone/shared-server/wake-engine.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
