@@ -165,7 +165,7 @@ function entryPriority(type) {
 
 function createSignal(reason, priority, payload, now, dedupeKey = null) {
   const id = randomUUID();
-  qInsert.run(
+  const result = qInsert.run(
     id,
     reason,
     priority,
@@ -175,7 +175,12 @@ function createSignal(reason, priority, payload, now, dedupeKey = null) {
     now + SIGNAL_TTL_MS,
     dedupeKey,
   );
-  console.log(`[wake-engine] signal ${reason} priority=${priority} id=${id}${dedupeKey ? ` dedupe=${dedupeKey}` : ''}`);
+  if (result.changes) {
+    console.log(`[wake-engine] signal ${reason} priority=${priority} id=${id}${dedupeKey ? ` dedupe=${dedupeKey}` : ''}`);
+    return true;
+  }
+  console.log(`[wake-engine] deduped ${reason}${dedupeKey ? ` key=${dedupeKey}` : ''}`);
+  return false;
 }
 
 function probabilityForElapsed(elapsedMs) {
@@ -208,6 +213,103 @@ function runOnce() {
   const lastXiaoci = Number(qLastActivity.get('xiaoci')?.t || 0);
   const baseline = Math.max(lastLaoshi, lastWake, 0);
 
+  const today = localIsoDate(now);
+  const tomorrow = localIsoDate(now + 24 * 60 * 60_000);
+  const todayMonthDay = today.slice(5);
+  const tomorrowMonthDay = tomorrow.slice(5);
+
+  for (const row of qAnniversaries.all()) {
+    const anniversary = parseJson(row.payload);
+    const rawDate = String(anniversary?.date || '');
+    const monthDay = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+      ? rawDate.slice(5)
+      : /^\d{2}-\d{2}$/.test(rawDate)
+        ? rawDate
+        : '';
+
+    if (!monthDay) continue;
+
+    if (monthDay === todayMonthDay) {
+      if (createSignal(
+        'anniversary_today',
+        96,
+        { id: row.id, anniversary, date: today },
+        now,
+        `anniversary:${row.id}:${today}`,
+      )) return;
+    }
+
+    if (monthDay === tomorrowMonthDay) {
+      if (createSignal(
+        'anniversary_tomorrow',
+        68,
+        { id: row.id, anniversary, date: tomorrow },
+        now,
+        `anniversary:${row.id}:${tomorrow}:eve`,
+      )) return;
+    }
+  }
+
+  const entries = qNewEntries.all(baseline).map(row => ({
+    id: row.id,
+    appType: row.app_type,
+    title: row.title || undefined,
+    body: row.body || '',
+    payload: parseJson(row.payload),
+    updatedAt: row.updated_at,
+  }));
+
+  if (entries.length > 0) {
+    const top = [...entries].sort((a, b) => entryPriority(b.appType) - entryPriority(a.appType))[0];
+    if (createSignal(
+      `new_${top.appType}`,
+      entryPriority(top.appType),
+      { count: entries.length, latest: entries.slice(0, 8) },
+      now,
+      `entry:${top.id}:${top.updatedAt}`,
+    )) return;
+  }
+
+  const events = qNewEvents.all(baseline, now).map(row => ({
+    id: row.id,
+    type: row.type,
+    source: row.source,
+    payload: parseJson(row.payload),
+    createdAt: row.created_at,
+    expiresAt: row.expires_at || undefined,
+  }));
+
+  if (events.length > 0) {
+    const top = events[0];
+    if (createSignal(
+      'external_event',
+      76,
+      { count: events.length, latest: events.slice(0, 8) },
+      now,
+      `event:${top.id}`,
+    )) return;
+  }
+
+  const sessions = qUpdatedSessions.all(baseline).map(row => ({
+    id: row.id,
+    kind: row.kind,
+    title: row.title || undefined,
+    status: row.status,
+    payload: parseJson(row.payload) || {},
+    updatedAt: row.updated_at,
+  }));
+
+  if (sessions.length > 0) {
+    const top = sessions[0];
+    if (createSignal(
+      'unfinished_session_updated',
+      48,
+      { count: sessions.length, latest: sessions },
+      now,
+      `session:${top.id}:${top.updatedAt}`,
+    )) return;
+  }
+
   const fresh = qNewXiaociActivity.all(baseline).map(row => ({
     id: row.id,
     action: row.action,
@@ -220,11 +322,14 @@ function runOnce() {
   if (fresh.length > 0) {
     const meaningful = fresh.filter(item => item.action !== 'phone.open');
     if (meaningful.length > 0) {
-      createSignal('new_xiaoci_activity', 80, {
-        count: meaningful.length,
-        latest: meaningful.slice(0, 6),
-      }, now);
-      return;
+      const top = meaningful[0];
+      if (createSignal(
+        'new_xiaoci_activity',
+        58,
+        { count: meaningful.length, latest: meaningful.slice(0, 6) },
+        now,
+        `activity:${top.id}`,
+      )) return;
     }
   }
 
