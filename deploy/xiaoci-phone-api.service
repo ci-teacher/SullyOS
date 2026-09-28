@@ -1,0 +1,18 @@
+[Unit]
+Description=Xiaoci Shared Phone API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/xiaoci-phone
+EnvironmentFile=/var/www/xiaoci-phone/shared-server/.env
+ExecStart=/usr/bin/node /var/www/xiaoci-phone/shared-server/server.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
