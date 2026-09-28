@@ -36,6 +36,9 @@ jobs:
       - name: Check wake engine syntax
         run: node --check shared-server/wake-engine.mjs
 
+      - name: Check backup syntax
+        run: node --check shared-server/backup.mjs
+
       - name: Smoke test shared server
         shell: bash
         run: |
@@ -77,3 +80,11 @@ jobs:
           trap - EXIT
 
           SHARED_PHONE_DB=/tmp/shared-phone-ci.sqlite node shared-server/wake-engine.mjs --once
+
+          SHARED_PHONE_DB=/tmp/shared-phone-ci.sqlite \
+          SHARED_PHONE_MEDIA_DIR=/tmp/shared-phone-media \
+          SHARED_PHONE_BACKUP_DIR=/tmp/shared-phone-backups \
+          SHARED_PHONE_BACKUP_KEEP=2 \
+          node shared-server/backup.mjs
+
+          test -f "$(find /tmp/shared-phone-backups -name shared-phone.sqlite | head -n 1)"
