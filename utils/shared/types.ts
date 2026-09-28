@@ -12,9 +12,10 @@ export interface SharedActivity {
 }
 
 export interface SharedDiaryRecord {
-  diary: DiaryEntry;
+  diary: DiaryEntry | null;
   updatedBy: SharedActor;
   updatedAt: number;
+  deleted?: boolean;
 }
 
 export interface SharedListResponse<T> {
