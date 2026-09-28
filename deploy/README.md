@@ -4,7 +4,7 @@ Production target used by this repo:
 
 - Frontend: `https://phone.meimeibw.cc`
 - API: same-origin `/shared-api`
-- API process: localhost `127.0.0.1:8787`
+- API process: localhost `127.0.0.1:8791`
 - Database: SQLite under `/var/www/xiaoci-phone/data`
 - Media: `/var/www/xiaoci-phone/data/media`
 - Authentication: Nginx Basic Auth around the entire site
@@ -86,7 +86,7 @@ Check:
 ```bash
 sudo systemctl status xiaoci-phone-api.service --no-pager
 sudo systemctl status xiaoci-phone-wake.service --no-pager
-curl -I http://127.0.0.1:8787/health
+curl -I http://127.0.0.1:8791/health
 ```
 
 ## Updating later
