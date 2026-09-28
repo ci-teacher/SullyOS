@@ -2,7 +2,7 @@ import { resolveSharedActor } from './identity';
 import { sharedRequest } from './sharedClient';
 import { mutateSharedOrQueue } from './syncQueue';
 
-export type SharedResourceKind = 'social_post' | 'room_note' | 'anniversary' | 'free_activity';
+export type SharedResourceKind = 'social_post' | 'room_note' | 'room_todo' | 'anniversary' | 'free_activity';
 
 export interface SharedResourceRecord<T> {
   id: string;
