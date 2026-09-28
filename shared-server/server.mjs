@@ -139,11 +139,21 @@ db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(d
 
 const qDiaryList = db.prepare('SELECT id, payload, updated_by, updated_at, deleted FROM diaries WHERE char_id = ? ORDER BY date DESC');
 const qDiaryUpsert = db.prepare(`
-INSERT OR REPLACE INTO diaries(id, char_id, date, payload, updated_by, updated_at, deleted)
+INSERT INTO diaries(id, char_id, date, payload, updated_by, updated_at, deleted)
 VALUES (?, ?, ?, ?, ?, ?, 0)
+ON CONFLICT(id) DO UPDATE SET
+  char_id=excluded.char_id,
+  date=excluded.date,
+  payload=excluded.payload,
+  updated_by=excluded.updated_by,
+  updated_at=excluded.updated_at,
+  deleted=0
+WHERE excluded.updated_at >= diaries.updated_at
 `);
 const qDiaryGet = db.prepare('SELECT * FROM diaries WHERE id = ?');
-const qDiaryTombstone = db.prepare("UPDATE diaries SET payload=NULL, updated_by=?, updated_at=?, deleted=1 WHERE id=?");
+const qDiaryByDay = db.prepare('SELECT id, updated_at FROM diaries WHERE char_id=? AND date=? LIMIT 1');
+const qDiaryHardDelete = db.prepare('DELETE FROM diaries WHERE id=?');
+const qDiaryTombstone = db.prepare("UPDATE diaries SET payload=NULL, updated_by=?, updated_at=?, deleted=1 WHERE id=? AND updated_at <= ?");
 
 const qResourceListAll = db.prepare('SELECT * FROM shared_resources WHERE kind = ? ORDER BY updated_at DESC');
 const qResourceListScope = db.prepare('SELECT * FROM shared_resources WHERE kind = ? AND scope = ? ORDER BY updated_at DESC');
@@ -158,6 +168,7 @@ ON CONFLICT(kind, id) DO UPDATE SET
   updated_by=excluded.updated_by,
   updated_at=excluded.updated_at,
   deleted=0
+WHERE excluded.updated_at >= shared_resources.updated_at
 `);
 const qResourceTombstone = db.prepare(`
 INSERT INTO shared_resources(kind, id, scope, payload, media_id, updated_by, updated_at, deleted)
@@ -166,6 +177,7 @@ ON CONFLICT(kind, id) DO UPDATE SET
   updated_by=excluded.updated_by,
   updated_at=excluded.updated_at,
   deleted=1
+WHERE excluded.updated_at >= shared_resources.updated_at
 `);
 
 const qEntryGet = db.prepare('SELECT * FROM entries WHERE id = ?');
@@ -181,8 +193,9 @@ ON CONFLICT(id) DO UPDATE SET
   visibility=excluded.visibility,
   updated_at=excluded.updated_at,
   deleted=0
+WHERE excluded.updated_at >= entries.updated_at
 `);
-const qEntryTombstone = db.prepare('UPDATE entries SET deleted=1, updated_at=? WHERE id=?');
+const qEntryTombstone = db.prepare('UPDATE entries SET deleted=1, updated_at=? WHERE id=? AND updated_at <= ?');
 
 const qEventInsert = db.prepare(`
 INSERT OR REPLACE INTO events(id, type, source, payload, created_at, expires_at, consumed_at)
@@ -202,8 +215,9 @@ ON CONFLICT(id) DO UPDATE SET
   updated_by=excluded.updated_by,
   updated_at=excluded.updated_at,
   deleted=0
+WHERE excluded.updated_at >= sessions.updated_at
 `);
-const qSessionTombstone = db.prepare('UPDATE sessions SET deleted=1, updated_by=?, updated_at=? WHERE id=?');
+const qSessionTombstone = db.prepare('UPDATE sessions SET deleted=1, updated_by=?, updated_at=? WHERE id=? AND updated_at <= ?');
 const qMediaGet = db.prepare('SELECT * FROM media WHERE id = ?');
 const qMediaDelete = db.prepare('DELETE FROM media WHERE id = ?');
 const qMediaUpsert = db.prepare(`
@@ -589,8 +603,15 @@ const server = http.createServer(async (req, res) => {
         return send(res, 400, { error: 'invalid diary' });
       }
       const updatedAt = Number(body.updatedAt || Date.now());
-      qDiaryUpsert.run(id, diary.charId, diary.date, JSON.stringify(diary), actor(body.updatedBy), updatedAt);
-      return send(res, 200, { ok: true, updatedAt });
+      const existingDay = qDiaryByDay.get(diary.charId, diary.date);
+      if (existingDay && existingDay.id !== id) {
+        if (Number(existingDay.updated_at || 0) > updatedAt) {
+          return send(res, 200, { ok: true, stale: true, canonicalId: existingDay.id, updatedAt: existingDay.updated_at });
+        }
+        qDiaryHardDelete.run(existingDay.id);
+      }
+      const result = qDiaryUpsert.run(id, diary.charId, diary.date, JSON.stringify(diary), actor(body.updatedBy), updatedAt);
+      return send(res, 200, { ok: true, stale: !result.changes, updatedAt });
     }
 
     if (req.method === 'DELETE' && path.startsWith('/v1/diaries/')) {
@@ -598,7 +619,8 @@ const server = http.createServer(async (req, res) => {
       const body = await readJson(req);
       const existing = qDiaryGet.get(id);
       if (existing) {
-        qDiaryTombstone.run(actor(body.updatedBy), Number(body.updatedAt || Date.now()), id);
+        const updatedAt = Number(body.updatedAt || Date.now());
+        qDiaryTombstone.run(actor(body.updatedBy), updatedAt, id, updatedAt);
       }
       return send(res, 204);
     }
@@ -618,7 +640,8 @@ const server = http.createServer(async (req, res) => {
         const body = await readJson(req);
         if (!body.payload || String(body.id || id) !== id) return send(res, 400, { error: 'invalid resource' });
         const updatedAt = Number(body.updatedAt || Date.now());
-        qResourceUpsert.run(
+        const previous = qResourceGet.get(kind, id);
+        const result = qResourceUpsert.run(
           kind,
           id,
           String(body.scope || ''),
@@ -627,7 +650,14 @@ const server = http.createServer(async (req, res) => {
           actor(body.updatedBy),
           updatedAt,
         );
-        return send(res, 200, { ok: true, updatedAt });
+        if (result.changes && previous?.media_id && previous.media_id !== body.mediaId) {
+          const oldMedia = qMediaGet.get(previous.media_id);
+          if (oldMedia?.file_path && existsSync(oldMedia.file_path)) {
+            try { unlinkSync(oldMedia.file_path); } catch {}
+          }
+          qMediaDelete.run(previous.media_id);
+        }
+        return send(res, 200, { ok: true, stale: !result.changes, updatedAt });
       }
 
       if (req.method === 'DELETE' && id) {
@@ -635,8 +665,15 @@ const server = http.createServer(async (req, res) => {
         const existing = qResourceGet.get(kind, id);
         const scope = existing?.scope || String(body.scope || '');
         const updatedAt = Number(body.updatedAt || Date.now());
-        qResourceTombstone.run(kind, id, scope, actor(body.updatedBy), updatedAt);
-        return send(res, 200, { ok: true, updatedAt });
+        const result = qResourceTombstone.run(kind, id, scope, actor(body.updatedBy), updatedAt);
+        if (result.changes && existing?.media_id) {
+          const oldMedia = qMediaGet.get(existing.media_id);
+          if (oldMedia?.file_path && existsSync(oldMedia.file_path)) {
+            try { unlinkSync(oldMedia.file_path); } catch {}
+          }
+          qMediaDelete.run(existing.media_id);
+        }
+        return send(res, 200, { ok: true, stale: !result.changes, updatedAt });
       }
     }
 
@@ -668,7 +705,10 @@ const server = http.createServer(async (req, res) => {
       const id = decodeURIComponent(path.slice('/v1/entries/'.length));
       const body = await readJson(req);
       const existing = qEntryGet.get(id);
-      if (existing) qEntryTombstone.run(Number(body.updatedAt || Date.now()), id);
+      if (existing) {
+        const updatedAt = Number(body.updatedAt || Date.now());
+        qEntryTombstone.run(updatedAt, id, updatedAt);
+      }
       return send(res, 204);
     }
 
@@ -726,7 +766,10 @@ const server = http.createServer(async (req, res) => {
       const id = decodeURIComponent(path.slice('/v1/sessions/'.length));
       const body = await readJson(req);
       const existing = qSessionGet.get(id);
-      if (existing) qSessionTombstone.run(actor(body.updatedBy), Number(body.updatedAt || Date.now()), id);
+      if (existing) {
+        const updatedAt = Number(body.updatedAt || Date.now());
+        qSessionTombstone.run(actor(body.updatedBy), updatedAt, id, updatedAt);
+      }
       return send(res, 204);
     }
     const mediaMatch = path.match(/^\/v1\/media\/([^/]+)$/);
