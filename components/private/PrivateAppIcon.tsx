@@ -1,31 +1,23 @@
 import React, { useState } from 'react';
 import type { AppID } from '../../types';
 
-type Variant = 'red-dots' | 'stripe' | 'gradient' | 'yellow' | 'mint' | 'blue' | 'paper';
-
-const classes: Record<Variant, string> = {
-  'red-dots': 'xp-dots-red text-white',
-  stripe: 'xp-stripe text-[#7f2438]',
-  gradient: 'xp-candy-gradient text-white',
-  yellow: 'bg-[#f4d878] text-[#7c2e36]',
-  mint: 'bg-[#acd7bd] text-[#304f40]',
-  blue: 'bg-[#a9c8f5] text-[#35506e]',
-  paper: 'bg-[#fffdf7] text-[#3b2d29] border border-black/[0.08]',
-};
-
 interface Props {
   appId: AppID | string;
   fallback: React.ReactNode;
-  variant?: Variant;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md';
+  decorated?: 'none' | 'dots' | 'stripes';
 }
 
-const PrivateAppIcon: React.FC<Props> = ({ appId, fallback, variant = 'paper', size = 'md' }) => {
+const PrivateAppIcon: React.FC<Props> = ({ appId, fallback, size = 'md', decorated = 'none' }) => {
   const [failed, setFailed] = useState(false);
-  const px = size === 'lg' ? 'h-[62px] w-[62px]' : size === 'sm' ? 'h-10 w-10' : 'h-[54px] w-[54px]';
+  const box = size === 'sm' ? 'h-11 w-11 rounded-[11px]' : 'xp-app-icon';
+  const decoration =
+    decorated === 'dots' ? 'xp-dots-gray' :
+    decorated === 'stripes' ? 'xp-stripes-gray' :
+    'bg-white';
 
   return (
-    <div className={'relative flex shrink-0 items-center justify-center overflow-hidden rounded-[19px] xp-sticker ' + px + ' ' + classes[variant]}>
+    <div className={'relative flex shrink-0 items-center justify-center overflow-hidden ' + box + ' ' + decoration}>
       {!failed && (
         <img
           src={'/media/private/icons/' + appId + '.png'}
@@ -34,7 +26,11 @@ const PrivateAppIcon: React.FC<Props> = ({ appId, fallback, variant = 'paper', s
           onError={() => setFailed(true)}
         />
       )}
-      {failed && <div className="relative z-10 flex items-center justify-center">{fallback}</div>}
+      {failed && (
+        <div className="relative z-10 flex items-center justify-center text-[#B5ADAC]">
+          {fallback}
+        </div>
+      )}
     </div>
   );
 };
