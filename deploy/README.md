@@ -36,9 +36,9 @@ pnpm build
 ## Shared server config
 
 ```bash
-mkdir -p /var/www/xiaoci-phone/data/media
+mkdir -p /var/www/xiaoci-phone/data/media /var/www/xiaoci-phone/backups
 cp deploy/shared-server.env /var/www/xiaoci-phone/shared-server/.env
-sudo chown -R www-data:www-data /var/www/xiaoci-phone/data
+sudo chown -R www-data:www-data /var/www/xiaoci-phone/data /var/www/xiaoci-phone/backups
 sudo chown www-data:www-data /var/www/xiaoci-phone/shared-server/.env
 ```
 
@@ -76,9 +76,12 @@ sudo systemctl reload nginx
 ```bash
 sudo cp deploy/xiaoci-phone-api.service /etc/systemd/system/
 sudo cp deploy/xiaoci-phone-wake.service /etc/systemd/system/
+sudo cp deploy/xiaoci-phone-backup.service /etc/systemd/system/
+sudo cp deploy/xiaoci-phone-backup.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now xiaoci-phone-api.service
 sudo systemctl enable --now xiaoci-phone-wake.service
+sudo systemctl enable --now xiaoci-phone-backup.timer
 ```
 
 Check:
@@ -86,6 +89,7 @@ Check:
 ```bash
 sudo systemctl status xiaoci-phone-api.service --no-pager
 sudo systemctl status xiaoci-phone-wake.service --no-pager
+sudo systemctl status xiaoci-phone-backup.timer --no-pager
 curl -I http://127.0.0.1:8791/health
 ```
 
