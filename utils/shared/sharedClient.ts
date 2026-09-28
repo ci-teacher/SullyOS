@@ -48,3 +48,45 @@ export async function sharedRequest<T>(
     window.clearTimeout(timer);
   }
 }
+
+
+export async function sharedUploadBlob(path: string, blob: Blob): Promise<boolean> {
+  if (!isSharedApiEnabled()) return false;
+
+  const headers = new Headers();
+  if (SHARED_API_TOKEN) headers.set('Authorization', `Bearer ${SHARED_API_TOKEN}`);
+  if (blob.type) headers.set('Content-Type', blob.type);
+
+  try {
+    const response = await fetch(`${SHARED_API_BASE}${path.startsWith('/') ? path : `/${path}`}`, {
+      method: 'PUT',
+      headers,
+      body: blob,
+    });
+    if (!response.ok) throw new Error(`shared media upload ${response.status}`);
+    return true;
+  } catch (error) {
+    console.warn('[SharedPhone] media upload failed.', error);
+    return false;
+  }
+}
+
+export async function sharedRequestBlob(path: string): Promise<Blob | null> {
+  if (!isSharedApiEnabled()) return null;
+
+  const headers = new Headers();
+  if (SHARED_API_TOKEN) headers.set('Authorization', `Bearer ${SHARED_API_TOKEN}`);
+
+  try {
+    const response = await fetch(`${SHARED_API_BASE}${path.startsWith('/') ? path : `/${path}`}`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`shared media fetch ${response.status}`);
+    return await response.blob();
+  } catch (error) {
+    console.warn('[SharedPhone] media fetch failed.', error);
+    return null;
+  }
+}
