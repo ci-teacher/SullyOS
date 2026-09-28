@@ -12,6 +12,7 @@ export interface SharedActivity {
 }
 
 export interface SharedDiaryRecord {
+  id: string;
   diary: DiaryEntry | null;
   updatedBy: SharedActor;
   updatedAt: number;
