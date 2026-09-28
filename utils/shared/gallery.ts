@@ -10,6 +10,36 @@ import {
   type SharedResourceRecord,
 } from './resourceStore';
 
+const PENDING_GALLERY_KEY = 'shared_phone_pending_gallery_media_v1';
+let galleryRetryInstalled = false;
+let galleryRetryTimer: number | null = null;
+
+function readPendingGallery(): GalleryImage[] {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_GALLERY_KEY) || '[]') as GalleryImage[];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingGallery(items: GalleryImage[]): void {
+  try {
+    localStorage.setItem(PENDING_GALLERY_KEY, JSON.stringify(items.slice(-100)));
+  } catch {
+    // Media retry metadata must never block the local gallery save.
+  }
+}
+
+function queuePendingGallery(image: GalleryImage): void {
+  const items = readPendingGallery().filter(item => item.id !== image.id);
+  items.push(image);
+  writePendingGallery(items);
+}
+
+function removePendingGallery(id: string): void {
+  writePendingGallery(readPendingGallery().filter(item => item.id !== id));
+}
+
 async function imageBlob(url: string): Promise<Blob | null> {
   if (isBlobRef(url)) return await getBlobForRef(url);
   if (url.startsWith('data:')) {
@@ -58,6 +88,7 @@ export async function fetchSharedGallery(
     if (record.deleted) {
       out.delete(record.id);
       markLocalResourceVersion('gallery', record.id, record.updatedAt);
+      removePendingGallery(record.id);
       continue;
     }
 
@@ -68,20 +99,61 @@ export async function fetchSharedGallery(
   return [...out.values()];
 }
 
-export async function saveSharedGalleryImage(image: GalleryImage): Promise<void> {
-  const updatedAt = markLocalResourceVersion('gallery', image.id);
+async function uploadGalleryImage(image: GalleryImage): Promise<boolean> {
+  const updatedAt = getLocalResourceVersion('gallery', image.id) || markLocalResourceVersion('gallery', image.id);
   let mediaId: string | undefined;
   const blob = await imageBlob(image.url);
 
   if (blob) {
     mediaId = `gallery-${image.id}`;
     const uploaded = await sharedUploadBlob(`/v1/media/${encodeURIComponent(mediaId)}`, blob);
-    if (!uploaded) return;
+    if (!uploaded) return false;
   }
 
   await putSharedResource('gallery', image.id, image, image.charId, { mediaId, updatedAt });
+  return true;
+}
+
+export async function saveSharedGalleryImage(image: GalleryImage): Promise<void> {
+  markLocalResourceVersion('gallery', image.id);
+  const ok = await uploadGalleryImage(image);
+  if (ok) removePendingGallery(image.id);
+  else queuePendingGallery(image);
+}
+
+export async function flushPendingSharedGallery(): Promise<void> {
+  const pending = readPendingGallery();
+  if (!pending.length) return;
+
+  const remaining: GalleryImage[] = [];
+  for (const image of pending) {
+    const ok = await uploadGalleryImage(image);
+    if (!ok) remaining.push(image);
+  }
+  writePendingGallery(remaining);
+}
+
+const galleryRetryListener = () => { void flushPendingSharedGallery(); };
+
+export function installSharedGalleryRetry(): void {
+  if (galleryRetryInstalled || typeof window === 'undefined') return;
+  galleryRetryInstalled = true;
+  window.addEventListener('online', galleryRetryListener);
+  window.addEventListener('focus', galleryRetryListener);
+  galleryRetryTimer = window.setInterval(galleryRetryListener, 2 * 60_000);
+  galleryRetryListener();
+}
+
+export function uninstallSharedGalleryRetry(): void {
+  if (!galleryRetryInstalled || typeof window === 'undefined') return;
+  galleryRetryInstalled = false;
+  window.removeEventListener('online', galleryRetryListener);
+  window.removeEventListener('focus', galleryRetryListener);
+  if (galleryRetryTimer !== null) window.clearInterval(galleryRetryTimer);
+  galleryRetryTimer = null;
 }
 
 export async function deleteSharedGalleryImage(imageId: string, charId = ''): Promise<void> {
+  removePendingGallery(imageId);
   await deleteSharedResource('gallery', imageId, charId);
 }
