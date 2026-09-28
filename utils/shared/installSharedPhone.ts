@@ -1,7 +1,18 @@
 import { DB } from '../db';
-import type { DiaryEntry } from '../../types';
+import type { Anniversary, DiaryEntry, GalleryImage, RoomNote, SocialPost } from '../../types';
 import { deleteSharedDiary, fetchSharedDiaries, mergeDiaryCopies, saveSharedDiary } from './journal';
 import { recordSharedActivity } from './activity';
+import {
+  deleteSharedResource,
+  getLocalResourceVersion,
+  listSharedResources,
+  markLocalResourceVersion,
+  mergeSharedResourceRecords,
+  putSharedResource,
+  type SharedResourceKind,
+  type SharedResourceRecord,
+} from './resourceStore';
+import { deleteSharedGalleryImage, fetchSharedGallery, saveSharedGalleryImage } from './gallery';
 
 let installed = false;
 
@@ -16,19 +27,34 @@ function markFirstUseGuideDone(): void {
   }
 }
 
+async function reconcileRemoteRecords<T extends { id: string }>(
+  kind: SharedResourceKind,
+  local: T[],
+  remote: SharedResourceRecord<T>[],
+  saveLocal: (item: T) => Promise<void>,
+  deleteLocal: (id: string) => Promise<void>,
+): Promise<T[]> {
+  for (const record of remote) {
+    if (record.updatedAt < getLocalResourceVersion(kind, record.id)) continue;
+    if (record.deleted || !record.payload) await deleteLocal(record.id);
+    else await saveLocal(record.payload);
+  }
+  return mergeSharedResourceRecords(kind, local, remote);
+}
+
 export function installSharedPhoneFoundation(): void {
   if (installed) return;
   installed = true;
 
   markFirstUseGuideDone();
 
+  // ── Exchange diary ──────────────────────────────────────────
   const originalGetDiaries = DB.getDiariesByCharId.bind(DB);
   const originalSaveDiary = DB.saveDiary.bind(DB);
   const originalDeleteDiary = DB.deleteDiary.bind(DB);
 
   DB.getDiariesByCharId = async (charId: string): Promise<DiaryEntry[]> => {
     const local = await originalGetDiaries(charId);
-
     try {
       const remote = await fetchSharedDiaries(charId);
       const merged = mergeDiaryCopies(local, remote);
@@ -39,7 +65,6 @@ export function installSharedPhoneFoundation(): void {
           await originalSaveDiary(diary);
         }
       }
-
       return merged;
     } catch (error) {
       console.warn('[SharedPhone] diary pull failed; using local copy.', error);
@@ -50,23 +75,156 @@ export function installSharedPhoneFoundation(): void {
   DB.saveDiary = async (diary: DiaryEntry): Promise<void> => {
     const stamped = { ...diary, timestamp: Date.now() };
     await originalSaveDiary(stamped);
-
     void Promise.all([
       saveSharedDiary(stamped),
-      recordSharedActivity('diary.save', 'diary', stamped.id, {
-        charId: stamped.charId,
-        date: stamped.date,
-      }),
+      recordSharedActivity('diary.save', 'diary', stamped.id, { charId: stamped.charId, date: stamped.date }),
     ]);
   };
 
   DB.deleteDiary = async (id: string): Promise<void> => {
     await originalDeleteDiary(id);
-
     void Promise.all([
       deleteSharedDiary(id),
       recordSharedActivity('diary.delete', 'diary', id),
     ]);
+  };
+
+  // ── Spark ───────────────────────────────────────────────────
+  const originalGetSocialPosts = DB.getSocialPosts.bind(DB);
+  const originalSaveSocialPost = DB.saveSocialPost.bind(DB);
+  const originalDeleteSocialPost = DB.deleteSocialPost.bind(DB);
+  const originalClearSocialPosts = DB.clearSocialPosts.bind(DB);
+
+  DB.getSocialPosts = async (): Promise<SocialPost[]> => {
+    const local = await originalGetSocialPosts();
+    const remote = await listSharedResources<SocialPost>('social_post');
+    return await reconcileRemoteRecords('social_post', local, remote, originalSaveSocialPost, originalDeleteSocialPost);
+  };
+
+  DB.saveSocialPost = async (post: SocialPost): Promise<void> => {
+    await originalSaveSocialPost(post);
+    const updatedAt = markLocalResourceVersion('social_post', post.id);
+    void Promise.all([
+      putSharedResource('social_post', post.id, post, '', { updatedAt }),
+      recordSharedActivity('spark.save', 'social_post', post.id),
+    ]);
+  };
+
+  DB.deleteSocialPost = async (id: string): Promise<void> => {
+    await originalDeleteSocialPost(id);
+    void Promise.all([
+      deleteSharedResource('social_post', id),
+      recordSharedActivity('spark.delete', 'social_post', id),
+    ]);
+  };
+
+  DB.clearSocialPosts = async (): Promise<void> => {
+    const existing = await originalGetSocialPosts();
+    await originalClearSocialPosts();
+    void Promise.all(existing.map(post => deleteSharedResource('social_post', post.id)));
+  };
+
+  // ── Room notes / sticky traces ───────────────────────────────
+  const originalGetRoomNotes = DB.getRoomNotes.bind(DB);
+  const originalSaveRoomNote = DB.saveRoomNote.bind(DB);
+  const originalDeleteRoomNote = DB.deleteRoomNote.bind(DB);
+
+  DB.getRoomNotes = async (charId: string): Promise<RoomNote[]> => {
+    const local = await originalGetRoomNotes(charId);
+    const remote = await listSharedResources<RoomNote>('room_note', charId);
+    return await reconcileRemoteRecords('room_note', local, remote, originalSaveRoomNote, originalDeleteRoomNote);
+  };
+
+  DB.saveRoomNote = async (note: RoomNote): Promise<void> => {
+    await originalSaveRoomNote(note);
+    const updatedAt = markLocalResourceVersion('room_note', note.id);
+    void Promise.all([
+      putSharedResource('room_note', note.id, note, note.charId, { updatedAt }),
+      recordSharedActivity('note.save', 'room_note', note.id, { charId: note.charId, type: note.type }),
+    ]);
+  };
+
+  DB.deleteRoomNote = async (id: string): Promise<void> => {
+    await originalDeleteRoomNote(id);
+    void Promise.all([
+      deleteSharedResource('room_note', id),
+      recordSharedActivity('note.delete', 'room_note', id),
+    ]);
+  };
+
+  // ── Anniversaries / shared calendar anchors ─────────────────
+  const originalGetAnniversaries = DB.getAllAnniversaries.bind(DB);
+  const originalSaveAnniversary = DB.saveAnniversary.bind(DB);
+  const originalDeleteAnniversary = DB.deleteAnniversary.bind(DB);
+
+  DB.getAllAnniversaries = async (): Promise<Anniversary[]> => {
+    const local = await originalGetAnniversaries();
+    const remote = await listSharedResources<Anniversary>('anniversary');
+    return await reconcileRemoteRecords('anniversary', local, remote, originalSaveAnniversary, originalDeleteAnniversary);
+  };
+
+  DB.saveAnniversary = async (anniversary: Anniversary): Promise<void> => {
+    await originalSaveAnniversary(anniversary);
+    const updatedAt = markLocalResourceVersion('anniversary', anniversary.id);
+    void Promise.all([
+      putSharedResource('anniversary', anniversary.id, anniversary, anniversary.charId, { updatedAt }),
+      recordSharedActivity('anniversary.save', 'anniversary', anniversary.id, { date: anniversary.date }),
+    ]);
+  };
+
+  DB.deleteAnniversary = async (id: string): Promise<void> => {
+    await originalDeleteAnniversary(id);
+    void Promise.all([
+      deleteSharedResource('anniversary', id),
+      recordSharedActivity('anniversary.delete', 'anniversary', id),
+    ]);
+  };
+
+  // ── Gallery + actual media bytes ─────────────────────────────
+  const originalGetGalleryImages = DB.getGalleryImages.bind(DB);
+  const originalSaveGalleryImage = DB.saveGalleryImage.bind(DB);
+  const originalDeleteGalleryImage = DB.deleteGalleryImage.bind(DB);
+  const originalGetGalleryImageById = DB.getGalleryImageById.bind(DB);
+  const originalUpdateGalleryImageReview = DB.updateGalleryImageReview.bind(DB);
+
+  DB.getGalleryImages = async (charId?: string): Promise<GalleryImage[]> => {
+    const local = await originalGetGalleryImages(charId);
+    const merged = await fetchSharedGallery(local, charId);
+    const mergedIds = new Set(merged.map(item => item.id));
+
+    for (const item of local) {
+      if (!mergedIds.has(item.id)) await originalDeleteGalleryImage(item.id);
+    }
+    for (const item of merged) {
+      const before = local.find(existing => existing.id === item.id);
+      if (!before || before.url !== item.url || before.review !== item.review || before.timestamp !== item.timestamp) {
+        await originalSaveGalleryImage(item);
+      }
+    }
+    return merged;
+  };
+
+  DB.saveGalleryImage = async (image: GalleryImage): Promise<void> => {
+    await originalSaveGalleryImage(image);
+    void Promise.all([
+      saveSharedGalleryImage(image),
+      recordSharedActivity('gallery.save', 'gallery', image.id, { charId: image.charId }),
+    ]);
+  };
+
+  DB.deleteGalleryImage = async (id: string): Promise<void> => {
+    const existing = await originalGetGalleryImageById(id);
+    await originalDeleteGalleryImage(id);
+    void Promise.all([
+      deleteSharedGalleryImage(id, existing?.charId || ''),
+      recordSharedActivity('gallery.delete', 'gallery', id, { charId: existing?.charId }),
+    ]);
+  };
+
+  DB.updateGalleryImageReview = async (id: string, review: string): Promise<void> => {
+    await originalUpdateGalleryImageReview(id, review);
+    const updated = await originalGetGalleryImageById(id);
+    if (updated) void saveSharedGalleryImage(updated);
   };
 
   void recordSharedActivity('phone.open', 'phone');
