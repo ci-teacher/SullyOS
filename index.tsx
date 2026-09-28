@@ -21,23 +21,26 @@ async function boot() {
     return;
   }
 
+  const sharedPhoneMode = import.meta.env.VITE_SHARED_PHONE_MODE === 'true';
+
   const [
     { default: App },
     { installTranslateCrashGuard },
     { installIOSStandaloneWorkaround },
     { initAnalytics },
-    { installSharedPhoneFoundation },
     { Capacitor },
   ] = await Promise.all([
     import('./App'),
     import('./utils/translateCrashGuard'),
     import('./utils/iosStandalone'),
     import('./utils/analytics'),
-    import('./utils/shared/installSharedPhone'),
     import('@capacitor/core'),
   ]);
 
-  installSharedPhoneFoundation();
+  if (sharedPhoneMode) {
+    const { installSharedPhoneFoundation } = await import('./utils/shared/installSharedPhone');
+    installSharedPhoneFoundation();
+  }
 
   if (import.meta.env.VITE_AMSG_NATIVE_PUSH === 'true' && Capacitor.isNativePlatform()) {
     if (Capacitor.getPlatform() === 'android') {
@@ -46,8 +49,6 @@ async function boot() {
       void import('./utils/nativeAmsgPush').then(({ initNativeAmsgPush }) => initNativeAmsgPush());
     }
   }
-
-  const sharedPhoneMode = import.meta.env.VITE_SHARED_PHONE_MODE === 'true';
 
   if (!sharedPhoneMode) {
     const [
