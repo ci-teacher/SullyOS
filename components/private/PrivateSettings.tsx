@@ -25,7 +25,7 @@ const PrivateSettings: React.FC = () => {
   useEffect(() => { void check(); }, []);
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-[#f5f2ee] text-[#221d1a]">
+    <div className="h-full w-full overflow-y-auto bg-[#fff8e8] text-[#221d1a]">
       <div className="mx-auto min-h-full w-full max-w-[680px] px-5 pb-16 pt-[max(1.25rem,var(--safe-top,0px))]">
         <header className="flex items-center gap-4">
           <button onClick={closeApp} className="flex h-10 w-10 items-center justify-center rounded-full border border-black/[0.07] bg-white/70">
@@ -37,7 +37,7 @@ const PrivateSettings: React.FC = () => {
           </div>
         </header>
 
-        <section className="mt-8 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdfa]">
+        <section className="mt-8 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdf7]">
           <div className="flex items-center gap-4 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eee9e3]"><UserCircle size={24} /></div>
             <div className="flex-1">
@@ -47,7 +47,7 @@ const PrivateSettings: React.FC = () => {
           </div>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdfa]">
+        <section className="mt-4 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdf7]">
           <div className="flex items-center gap-4 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eee9e3]"><HardDrives size={23} /></div>
             <div className="min-w-0 flex-1">
@@ -63,7 +63,7 @@ const PrivateSettings: React.FC = () => {
           </button>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdfa]">
+        <section className="mt-4 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdf7]">
           <div className="p-5">
             <div className="text-sm font-semibold">本机错误日志</div>
             <div className="mt-1 text-xs text-black/45">{systemLogs.length ? '当前有 ' + systemLogs.length + ' 条记录' : '目前干净。'}</div>
@@ -79,7 +79,7 @@ const PrivateSettings: React.FC = () => {
         </section>
 
         <div className="mt-8 px-1 text-[11px] leading-5 text-black/35">
-          糯米机的数据库、媒体、App 生命周期和底层能力仍在工作；这里不再暴露它原来的模型配置、作者入口和产品设置。
+          数据库、媒体、App 生命周期和共享能力都留在底层。这里仅放这台小手机自己需要的设置。
         </div>
       </div>
     </div>
