@@ -413,8 +413,9 @@ function teacherHome() {
   const laoshiActivity = db.prepare("SELECT MAX(created_at) AS t FROM activity WHERE actor='laoshi'").get().t || null;
   const recent = qRecentActivity.all(20).map(rowToActivity);
   const pendingWake = rowToWake(qPendingWake.get(now));
-  const recentDiaries = db.prepare('SELECT payload, updated_by, updated_at FROM diaries WHERE deleted=0 ORDER BY updated_at DESC LIMIT 8').all()
+  const recentDiaries = db.prepare('SELECT id, payload, updated_by, updated_at FROM diaries WHERE deleted=0 ORDER BY updated_at DESC LIMIT 8').all()
     .map(row => ({
+      id: row.id,
       diary: parseRowJson(row.payload, {}),
       updatedBy: row.updated_by,
       updatedAt: row.updated_at,
@@ -425,15 +426,26 @@ function teacherHome() {
   );
   const recentResources = db.prepare("SELECT * FROM shared_resources WHERE deleted=0 ORDER BY updated_at DESC LIMIT 12").all()
     .map(rowToResource);
+  const entryCounts = Object.fromEntries(
+    db.prepare("SELECT app_type, COUNT(*) AS n FROM entries WHERE deleted=0 GROUP BY app_type").all()
+      .map(row => [row.app_type, row.n]),
+  );
+  const recentEntries = db.prepare("SELECT * FROM entries WHERE deleted=0 ORDER BY updated_at DESC LIMIT 12").all()
+    .map(rowToEntry);
+  const activeSessions = db.prepare("SELECT * FROM sessions WHERE deleted=0 AND status IN ('active','paused') ORDER BY updated_at DESC LIMIT 8").all()
+    .map(rowToSession);
 
   return {
     now,
     diaryCount,
     resourceCounts,
+    entryCounts,
     lastActivityAt: { xiaoci: xiaociActivity, laoshi: laoshiActivity },
     recentActivity: recent,
     recentDiaries,
     recentResources,
+    recentEntries,
+    activeSessions,
     pendingWake,
   };
 }
@@ -454,6 +466,7 @@ const server = http.createServer(async (req, res) => {
       const charId = url.searchParams.get('charId');
       if (!charId) return send(res, 400, { error: 'charId required' });
       const items = qDiaryList.all(charId).map(row => ({
+        id: row.id,
         diary: row.deleted ? null : parseRowJson(row.payload, {}),
         updatedBy: row.updated_by,
         updatedAt: row.updated_at,
