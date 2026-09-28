@@ -1,9 +1,9 @@
 {
-  "short_name": "SullyOS·糯米机",
-  "name": "SullyOS·糯米机",
+  "short_name": "小手机",
+  "name": "小手机",
   "display": "standalone",
-  "theme_color": "#0f1115",
-  "background_color": "#0f1115",
+  "theme_color": "#d92f4f",
+  "background_color": "#fff8e8",
   "start_url": "./",
   "scope": "./",
   "icons": [
