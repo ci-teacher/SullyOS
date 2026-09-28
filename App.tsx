@@ -11,6 +11,7 @@ import WorldBroadcast from './components/WorldBroadcast';
 import ChatBroadcast from './components/ChatBroadcast';
 import { isIOSStandaloneWebApp } from './utils/iosStandalone';
 import { installDevDebugLifecycleCapture } from './utils/devDebug';
+import TeacherHomeGate from './components/shared/TeacherHomeGate';
 
 const App: React.FC = () => {
   React.useEffect(() => {
@@ -39,6 +40,7 @@ const App: React.FC = () => {
           <OSProvider>
             <MusicProvider>
               <PhoneShell />
+              <TeacherHomeGate />
             </MusicProvider>
             {/* 挂在 Provider 里面才能直接读 characters（省掉轮询 IndexedDB），
                 面板自身用 portal 渲染到 body，绕开上面那层 transform 对 fixed 定位的影响。 */}
