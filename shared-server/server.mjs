@@ -23,9 +23,10 @@ CREATE TABLE IF NOT EXISTS diaries (
   id TEXT PRIMARY KEY,
   char_id TEXT NOT NULL,
   date TEXT NOT NULL,
-  payload TEXT NOT NULL,
+  payload TEXT,
   updated_by TEXT NOT NULL CHECK(updated_by IN ('xiaoci','laoshi')),
-  updated_at INTEGER NOT NULL
+  updated_at INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_diaries_char_date ON diaries(char_id, date);
 CREATE INDEX IF NOT EXISTS idx_diaries_updated_at ON diaries(updated_at DESC);
@@ -75,7 +76,7 @@ CREATE TABLE IF NOT EXISTS wake_signals (
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
 `);
 
-const qDiaryList = db.prepare('SELECT payload, updated_by, updated_at FROM diaries WHERE char_id = ? ORDER BY date DESC');
+const qDiaryList = db.prepare('SELECT id, payload, updated_by, updated_at, deleted FROM diaries WHERE char_id = ? ORDER BY date DESC');
 const qDiaryUpsert = db.prepare(`
 INSERT INTO diaries(id, char_id, date, payload, updated_by, updated_at)
 VALUES (?, ?, ?, ?, ?, ?)
@@ -84,9 +85,11 @@ ON CONFLICT(id) DO UPDATE SET
   date=excluded.date,
   payload=excluded.payload,
   updated_by=excluded.updated_by,
-  updated_at=excluded.updated_at
+  updated_at=excluded.updated_at,
+  deleted=0
 `);
-const qDiaryDelete = db.prepare('DELETE FROM diaries WHERE id = ?');
+const qDiaryGet = db.prepare('SELECT * FROM diaries WHERE id = ?');
+const qDiaryTombstone = db.prepare("UPDATE diaries SET payload=NULL, updated_by=?, updated_at=?, deleted=1 WHERE id=?");
 
 const qResourceListAll = db.prepare('SELECT * FROM shared_resources WHERE kind = ? ORDER BY updated_at DESC');
 const qResourceListScope = db.prepare('SELECT * FROM shared_resources WHERE kind = ? AND scope = ? ORDER BY updated_at DESC');
@@ -97,7 +100,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, 0)
 ON CONFLICT(kind, id) DO UPDATE SET
   scope=excluded.scope,
   payload=excluded.payload,
-  media_id=COALESCE(excluded.media_id, shared_resources.media_id),
+  media_id=excluded.media_id,
   updated_by=excluded.updated_by,
   updated_at=excluded.updated_at,
   deleted=0
@@ -237,12 +240,12 @@ function safeMediaPath(id) {
 
 function teacherHome() {
   const now = Date.now();
-  const diaryCount = db.prepare('SELECT COUNT(*) AS n FROM diaries').get().n;
+  const diaryCount = db.prepare('SELECT COUNT(*) AS n FROM diaries WHERE deleted=0').get().n;
   const xiaociActivity = db.prepare("SELECT MAX(created_at) AS t FROM activity WHERE actor='xiaoci'").get().t || null;
   const laoshiActivity = db.prepare("SELECT MAX(created_at) AS t FROM activity WHERE actor='laoshi'").get().t || null;
   const recent = qRecentActivity.all(20).map(rowToActivity);
   const pendingWake = rowToWake(qPendingWake.get(now));
-  const recentDiaries = db.prepare('SELECT payload, updated_by, updated_at FROM diaries ORDER BY updated_at DESC LIMIT 8').all()
+  const recentDiaries = db.prepare('SELECT payload, updated_by, updated_at FROM diaries WHERE deleted=0 ORDER BY updated_at DESC LIMIT 8').all()
     .map(row => ({
       diary: parseRowJson(row.payload, {}),
       updatedBy: row.updated_by,
@@ -283,9 +286,10 @@ const server = http.createServer(async (req, res) => {
       const charId = url.searchParams.get('charId');
       if (!charId) return send(res, 400, { error: 'charId required' });
       const items = qDiaryList.all(charId).map(row => ({
-        diary: parseRowJson(row.payload, {}),
+        diary: row.deleted ? null : parseRowJson(row.payload, {}),
         updatedBy: row.updated_by,
         updatedAt: row.updated_at,
+        deleted: Boolean(row.deleted),
       }));
       return send(res, 200, { items });
     }
@@ -304,7 +308,11 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'DELETE' && path.startsWith('/v1/diaries/')) {
       const id = decodeURIComponent(path.slice('/v1/diaries/'.length));
-      qDiaryDelete.run(id);
+      const body = await readJson(req);
+      const existing = qDiaryGet.get(id);
+      if (existing) {
+        qDiaryTombstone.run(actor(body.updatedBy), Number(body.updatedAt || Date.now()), id);
+      }
       return send(res, 204);
     }
 
