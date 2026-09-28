@@ -1,5 +1,5 @@
 const RAW_BASE = String(import.meta.env.VITE_SHARED_API_BASE || '').trim();
-const SHARED_API_BASE = RAW_BASE.replace(/\\/+$/, '');
+const SHARED_API_BASE = RAW_BASE.replace(/\/+$/, '');
 const SHARED_API_TOKEN = String(import.meta.env.VITE_SHARED_API_TOKEN || '').trim();
 
 export function isSharedApiEnabled(): boolean {
