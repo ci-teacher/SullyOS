@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS wake_signals (
   result_payload TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS activity (
   id TEXT PRIMARY KEY,
