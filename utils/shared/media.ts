@@ -1,4 +1,5 @@
-import { sharedMutation, sharedRequestBlob, sharedUploadBlob } from './sharedClient';
+import { sharedRequestBlob, sharedUploadBlob } from './sharedClient';
+import { mutateSharedOrQueue } from './syncQueue';
 
 function makeId(prefix: string): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
@@ -20,5 +21,5 @@ export async function downloadSharedMedia(id: string): Promise<Blob | null> {
 }
 
 export async function deleteSharedMedia(id: string): Promise<boolean> {
-  return sharedMutation(`/v1/media/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  return mutateSharedOrQueue(`/v1/media/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
