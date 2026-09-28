@@ -1,0 +1,14 @@
+[Unit]
+Description=Xiaoci Shared Phone Backup
+After=xiaoci-phone-api.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/xiaoci-phone
+EnvironmentFile=/var/www/xiaoci-phone/shared-server/.env
+ExecStart=/usr/bin/node /var/www/xiaoci-phone/shared-server/backup.mjs
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
