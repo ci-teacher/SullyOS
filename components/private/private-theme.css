@@ -1,101 +1,125 @@
 
 .xiaoci-private {
-  --xp-red: #d92f4f;
-  --xp-red-deep: #a91735;
-  --xp-cream: #fff8e8;
-  --xp-paper: #fffdf7;
-  --xp-ink: #2c2220;
-  --xp-muted: #8a7770;
-  --xp-pink: #f6b8d2;
-  --xp-lilac: #b9a7ef;
-  --xp-blue: #a9c8f5;
-  --xp-mint: #acd7bd;
-  --xp-yellow: #f4d878;
-  --xp-line: rgba(64, 38, 32, 0.12);
-  --xp-radius-app: 22px;
-  --xp-radius-icon: 19px;
+  --xp-red: #FF3300;
+  --xp-logo: #B5ADAC;
+  --xp-white: #FFFFFF;
+  --xp-ink: #1F1F1F;
+  --xp-muted: #8A8583;
+  --xp-line: rgba(181, 173, 172, 0.28);
+  --xp-soft-red: rgba(255, 51, 0, 0.08);
+  --xp-soft-logo: rgba(181, 173, 172, 0.12);
+  --xp-icon-size: 60px;
+  --xp-icon-radius: 13px;
   font-family: 'Nunito', 'Noto Sans SC', sans-serif;
-  background: var(--xp-cream);
+  background: var(--xp-white);
   color: var(--xp-ink);
 }
 
-.xiaoci-private .xp-serif {
-  font-family: 'Shippori Mincho', 'Noto Sans SC', serif;
-}
-
 .xiaoci-private .xp-dots {
-  background-color: var(--xp-paper);
-  background-image: radial-gradient(circle, rgba(217,47,79,.18) 1.2px, transparent 1.3px);
+  background-color: #fff;
+  background-image: radial-gradient(circle, rgba(255, 51, 0, 0.22) 1.3px, transparent 1.4px);
   background-size: 11px 11px;
 }
 
-.xiaoci-private .xp-dots-red {
-  background-color: var(--xp-red);
-  background-image: radial-gradient(circle, rgba(255,255,255,.54) 1.2px, transparent 1.3px);
-  background-size: 12px 12px;
+.xiaoci-private .xp-dots-gray {
+  background-color: #fff;
+  background-image: radial-gradient(circle, rgba(181, 173, 172, 0.30) 1.2px, transparent 1.3px);
+  background-size: 10px 10px;
 }
 
-.xiaoci-private .xp-grid {
-  background-color: var(--xp-paper);
+.xiaoci-private .xp-stripes {
+  background-color: #fff;
   background-image:
-    linear-gradient(rgba(110,140,170,.10) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(110,140,170,.10) 1px, transparent 1px);
-  background-size: 16px 16px;
-}
-
-.xiaoci-private .xp-stripe {
-  background:
     repeating-linear-gradient(
       -45deg,
-      #fff9e9 0,
-      #fff9e9 9px,
-      #f8d6df 9px,
-      #f8d6df 18px
+      rgba(255, 51, 0, 0.10) 0,
+      rgba(255, 51, 0, 0.10) 7px,
+      transparent 7px,
+      transparent 14px
     );
 }
 
-.xiaoci-private .xp-candy-gradient {
-  background: linear-gradient(135deg, #f7aec8 0%, #c7b2f6 52%, #9fc9f2 100%);
+.xiaoci-private .xp-stripes-gray {
+  background-color: #fff;
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(181, 173, 172, 0.18) 0,
+      rgba(181, 173, 172, 0.18) 7px,
+      transparent 7px,
+      transparent 14px
+    );
 }
 
 .xiaoci-private .xp-press {
-  transition: transform 120ms ease, filter 120ms ease;
-}
-.xiaoci-private .xp-press:active {
-  transform: scale(.96);
-  filter: saturate(.92);
+  transition: transform 110ms ease, opacity 110ms ease;
 }
 
-.xiaoci-private .xp-sticker {
-  border: 1px solid rgba(75,45,40,.13);
-  box-shadow: 0 4px 0 rgba(75,45,40,.06);
+.xiaoci-private .xp-press:active {
+  transform: scale(.95);
+  opacity: .82;
+}
+
+.xiaoci-private .xp-app-icon {
+  width: var(--xp-icon-size);
+  height: var(--xp-icon-size);
+  border-radius: var(--xp-icon-radius);
+  background: #fff;
+  border: 1px solid rgba(181,173,172,.26);
+  box-shadow: 0 2px 8px rgba(40, 34, 32, .06);
+  color: var(--xp-logo);
+}
+
+.xiaoci-private .xp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(181,173,172,.35);
+  background: #fff;
+  color: #4e4947;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.xiaoci-private .xp-tag[data-active="true"] {
+  border-color: #FF3300;
+  color: #FF3300;
 }
 
 .xiaoci-private .xp-tag-number {
   display: inline-flex;
+  width: 22px;
   height: 22px;
-  min-width: 22px;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid var(--xp-red);
-  color: var(--xp-red-deep);
-  background: #fff;
-  font-family: 'DM Serif Display', serif;
+  background: rgba(181,173,172,.12);
+  color: #B5ADAC;
   font-size: 11px;
-  font-style: italic;
+  font-weight: 800;
 }
 
-.xiaoci-private .xp-tag-number[data-active="true"] {
-  color: white;
-  background: var(--xp-red);
-  border-color: var(--xp-red);
+.xiaoci-private .xp-tag[data-active="true"] .xp-tag-number {
+  background: #FF3300;
+  color: #fff;
 }
 
-.xiaoci-private .xp-panel {
-  background: rgba(255,253,247,.96);
-  border: 1px solid var(--xp-line);
-  border-radius: var(--xp-radius-app);
+.xiaoci-private .xp-section-title {
+  color: #2b2928;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+.xiaoci-private .xp-logo-color {
+  color: #B5ADAC;
+}
+
+.xiaoci-private .xp-accent {
+  color: #FF3300;
 }
 
 .xiaoci-private button,
