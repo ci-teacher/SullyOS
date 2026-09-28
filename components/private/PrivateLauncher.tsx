@@ -1,53 +1,54 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  BookOpenText, CalendarDots, GearSix, House, ImagesSquare, MusicNotes, Notebook,
-  Phone, Sparkle, Wallet, Brain, GameController, Books, ClockCounterClockwise,
+  CalendarBlank, Camera, Clock, EnvelopeSimple, FolderSimple, Gear,
+  Heart, House, ImageSquare, MapPin, MusicNote, NotePencil, Phone,
+  Sparkle, Storefront, Wallet, CloudSun, ListHeart, Shapes, FlowerTulip,
+  ChatCircleDots, Compass, GridFour,
 } from '@phosphor-icons/react';
 import { AppID } from '../../types';
 import { useOS } from '../../context/OSContext';
 import PrivateAppIcon from './PrivateAppIcon';
-import PrivateBrandMark from './PrivateBrandMark';
 
 type Tile = {
   id: AppID;
   label: string;
   icon: React.ReactNode;
-  decorated?: 'none' | 'dots' | 'stripes';
+  variant?: 'paper' | 'red' | 'pink' | 'map';
 };
 
 const APPS: Tile[] = [
-  { id: AppID.Journal, label: '交换日记', icon: <Notebook size={26} weight="regular" />, decorated: 'dots' },
-  { id: AppID.Gallery, label: '相册', icon: <ImagesSquare size={26} weight="regular" /> },
-  { id: AppID.Room, label: '小小窝', icon: <House size={26} weight="regular" />, decorated: 'stripes' },
-  { id: AppID.Social, label: '动态', icon: <Sparkle size={26} weight="regular" /> },
-  { id: AppID.Schedule, label: '日历', icon: <CalendarDots size={26} weight="regular" /> },
-  { id: AppID.CheckPhone, label: '查手机', icon: <Phone size={26} weight="regular" /> },
-  { id: AppID.MemoryPalace, label: '记忆', icon: <Brain size={26} weight="regular" />, decorated: 'dots' },
-  { id: AppID.Handbook, label: '手账', icon: <BookOpenText size={26} weight="regular" /> },
-  { id: AppID.Music, label: '音乐', icon: <MusicNotes size={26} weight="regular" /> },
-  { id: AppID.Game, label: '游戏', icon: <GameController size={26} weight="regular" />, decorated: 'stripes' },
-  { id: AppID.Novel, label: '阅读', icon: <Books size={26} weight="regular" /> },
-  { id: AppID.Bank, label: '存钱罐', icon: <Wallet size={26} weight="regular" /> },
-];
+  { id: AppID.Schedule, label: 'Calendar', icon: <CalendarBlank size={31} weight="duotone" /> },
+  { id: AppID.Gallery, label: 'Photos', icon: <FlowerTulip size={31} weight="duotone" /> },
+  { id: AppID.Date, label: 'Camera', icon: <Camera size={31} weight="duotone" /> },
+  { id: AppID.HotNews, label: 'Weather', icon: <CloudSun size={31} weight="fill" />, variant: 'red' },
 
-const QUICK = [
-  { n: 1, label: '日记', app: AppID.Journal },
-  { n: 2, label: '照片', app: AppID.Gallery },
-  { n: 3, label: '今天', app: AppID.Schedule },
-  { n: 4, label: '房间', app: AppID.Room },
-  { n: 5, label: '记忆', app: AppID.MemoryPalace },
+  { id: AppID.Journal, label: 'Notes', icon: <NotePencil size={31} weight="duotone" /> },
+  { id: AppID.SpecialMoments, label: 'Clock', icon: <Clock size={31} weight="duotone" /> },
+  { id: AppID.Browser, label: 'Maps', icon: <MapPin size={31} weight="fill" />, variant: 'map' },
+  { id: AppID.Handbook, label: 'Reminders', icon: <ListHeart size={31} weight="duotone" /> },
+
+  { id: AppID.Music, label: 'Music', icon: <MusicNote size={31} weight="fill" />, variant: 'red' },
+  { id: AppID.Game, label: 'App Store', icon: <Shapes size={31} weight="fill" />, variant: 'pink' },
+  { id: AppID.Settings, label: 'Settings', icon: <Gear size={31} weight="fill" /> },
+  { id: AppID.Bank, label: 'Files', icon: <FolderSimple size={31} weight="fill" />, variant: 'pink' },
+
+  { id: AppID.Chat, label: 'Mail', icon: <EnvelopeSimple size={31} weight="regular" /> },
+  { id: AppID.MemoryPalace, label: 'Health', icon: <Heart size={31} weight="fill" />, variant: 'red' },
+  { id: AppID.CheckPhone, label: 'Wallet', icon: <Wallet size={31} weight="fill" /> },
+  { id: AppID.Worldbook, label: 'Shortcuts', icon: <Shapes size={31} weight="fill" />, variant: 'pink' },
 ];
 
 const DOCK: Tile[] = [
-  APPS[0],
-  APPS[1],
-  APPS[2],
-  { id: AppID.Settings, label: '设置', icon: <GearSix size={25} weight="regular" /> },
+  { id: AppID.Call, label: 'Phone', icon: <Phone size={31} weight="fill" />, variant: 'paper' },
+  { id: AppID.Social, label: 'Messages', icon: <ChatCircleDots size={31} weight="fill" />, variant: 'pink' },
+  { id: AppID.Browser, label: 'Safari', icon: <Compass size={31} weight="fill" />, variant: 'paper' },
+  { id: AppID.Music, label: 'Music', icon: <MusicNote size={31} weight="fill" />, variant: 'paper' },
 ];
 
 const PrivateLauncher: React.FC = () => {
   const { openApp } = useOS();
   const [now, setNow] = useState(() => new Date());
+  const [mascotMissing, setMascotMissing] = useState(false);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 30_000);
@@ -59,115 +60,65 @@ const PrivateLauncher: React.FC = () => {
     [now],
   );
 
-  const date = useMemo(
-    () => new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }).format(now),
-    [now],
-  );
-
   return (
-    <div className="h-full w-full overflow-y-auto bg-white pb-28 text-[#1F1F1F]">
-      <main className="mx-auto w-full max-w-[620px] px-5 pt-[max(1.1rem,var(--safe-top,0px))]">
-        <header className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <PrivateBrandMark className="h-12 w-12" />
-            <div>
-              <div className="text-[22px] font-black tracking-[-0.03em]">小手机</div>
-              <div className="mt-0.5 text-[10px] font-bold tracking-[0.14em] text-[#B5ADAC]">XIAOCI × LAOSHI</div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-[28px] font-black leading-none tracking-[-0.03em]">{time}</div>
-            <div className="mt-1 text-[10px] font-bold text-[#B5ADAC]">{date}</div>
-          </div>
-        </header>
+    <div className="xp-home-wallpaper relative h-full w-full overflow-hidden bg-[#FFF8EF] text-[#7D3037]">
+      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-7 pt-[max(1.05rem,var(--safe-top,0px))] text-[17px] font-bold text-[#B8424E]">
+        <span>{time}</span>
+        <div className="flex items-center gap-2 text-[15px]">
+          <span className="tracking-[-.14em]">▮▮▮</span>
+          <span className="text-[16px]">⌁</span>
+          <span className="inline-block h-[13px] w-[23px] rounded-[4px] border-2 border-[#B8424E]">
+            <span className="m-[2px] block h-[5px] rounded-[2px] bg-[#B8424E]" />
+          </span>
+        </div>
+      </div>
 
-        <section className="mt-6">
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {QUICK.map((item, index) => (
-              <button
-                key={item.label}
-                onClick={() => openApp(item.app)}
-                className="xp-tag xp-press shrink-0"
-                data-active={index === 0}
-              >
-                <span className="xp-tag-number">{item.n}</span>
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="relative mt-7 overflow-hidden rounded-[22px] border border-[#B5ADAC]/25 bg-white px-5 py-5">
-          <div className="xp-dots-gray absolute right-0 top-0 h-full w-[32%] opacity-80" />
-          <div className="relative z-10 max-w-[68%]">
-            <div className="text-[18px] font-black leading-snug">我们的小手机</div>
-            <div className="mt-2 text-[12px] leading-5 text-[#77716F]">
-              放日记、照片和那些平常的小事。
-            </div>
+      <main className="relative z-10 mx-auto h-full w-full max-w-[430px] px-7 pt-[max(8.7rem,calc(var(--safe-top,0px)+7.5rem))]">
+        <div className="grid grid-cols-4 gap-x-5 gap-y-[22px]">
+          {APPS.map(app => (
             <button
-              onClick={() => openApp(AppID.Journal)}
-              className="xp-press mt-4 inline-flex items-center rounded-full bg-[#FF3300] px-4 py-2 text-[11px] font-black text-white"
+              key={app.id + app.label}
+              onClick={() => openApp(app.id)}
+              className="xp-press flex min-w-0 flex-col items-center gap-[7px]"
             >
-              写点东西
+              <PrivateAppIcon appId={app.id + '-' + app.label.toLowerCase().replace(/\s+/g,'-')} fallback={app.icon} variant={app.variant} />
+              <span className="max-w-[74px] truncate text-center text-[12px] font-semibold tracking-[-0.01em] text-[#9B3C45]">
+                {app.label}
+              </span>
             </button>
-          </div>
-          <div className="absolute bottom-4 right-5 h-10 w-16 rounded-[10px] border border-[#B5ADAC]/30 bg-white">
-            <div className="xp-stripes-gray h-full w-full rounded-[10px] opacity-80" />
-          </div>
-        </section>
+          ))}
+        </div>
 
-        <section className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="xp-section-title">应用</div>
-            <ClockCounterClockwise size={18} className="text-[#B5ADAC]" />
-          </div>
-
-          <div className="grid grid-cols-4 gap-x-4 gap-y-6">
-            {APPS.map(app => (
-              <button
-                key={app.id}
-                onClick={() => openApp(app.id)}
-                className="xp-press flex min-w-0 flex-col items-center gap-2"
-              >
-                <PrivateAppIcon
-                  appId={app.id}
-                  fallback={app.icon}
-                  decorated={app.decorated}
-                />
-                <span className="w-full truncate text-center text-[11px] font-bold text-[#3C3938]">
-                  {app.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-8 grid grid-cols-2 gap-3">
-          <button
-            onClick={() => openApp(AppID.Gallery)}
-            className="xp-press relative overflow-hidden rounded-[18px] border border-[#B5ADAC]/25 bg-white p-4 text-left"
-          >
-            <div className="xp-stripes absolute inset-x-0 top-0 h-4" />
-            <div className="mt-3 text-[13px] font-black">最近相册</div>
-            <div className="mt-1 text-[10px] leading-4 text-[#8A8583]">看看最近存下来的东西。</div>
-          </button>
-
-          <button
-            onClick={() => openApp(AppID.Room)}
-            className="xp-press relative overflow-hidden rounded-[18px] border border-[#B5ADAC]/25 bg-white p-4 text-left"
-          >
-            <div className="xp-dots absolute right-2 top-2 h-10 w-10 rounded-full opacity-80" />
-            <div className="text-[13px] font-black">小小窝</div>
-            <div className="mt-1 max-w-[72%] text-[10px] leading-4 text-[#8A8583]">进去待一会儿。</div>
-          </button>
-        </section>
+        <div className="absolute bottom-[136px] left-1/2 flex -translate-x-1/2 items-center gap-2">
+          <span className="h-[7px] w-[7px] rounded-full bg-[#D74B56]" />
+          <span className="h-[7px] w-[7px] rounded-full bg-[#D8C7C4]" />
+        </div>
       </main>
 
-      <div className="fixed bottom-[max(.7rem,var(--safe-bottom,0px))] left-1/2 z-40 -translate-x-1/2 rounded-[24px] border border-[#B5ADAC]/25 bg-white/96 px-4 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,.07)] backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      {!mascotMissing && (
+        <img
+          src="/media/private/brand/peek.png"
+          alt=""
+          onError={() => setMascotMissing(true)}
+          className="pointer-events-none absolute bottom-[99px] right-[18px] z-[15] w-[150px] select-none object-contain"
+        />
+      )}
+
+      {mascotMissing && (
+        <div className="pointer-events-none absolute bottom-[105px] right-[26px] z-[15] h-[112px] w-[142px]">
+          <div className="absolute bottom-0 right-2 h-[92px] w-[118px] rounded-t-[58px] border-[5px] border-[#C65C65] border-b-0 bg-[#FFF8EF]" />
+          <div className="absolute bottom-[38px] right-[30px] h-[8px] w-[8px] rounded-full bg-[#B8424E]" />
+          <div className="absolute bottom-[38px] right-[78px] h-[8px] w-[8px] rounded-full bg-[#B8424E]" />
+          <div className="absolute bottom-[22px] right-[53px] h-[5px] w-[5px] rounded-full bg-[#E1A84B]" />
+          <div className="absolute right-0 top-0 h-[40px] w-[56px] rounded-[16px] bg-[#D94B55]" />
+        </div>
+      )}
+
+      <div className="xp-dock absolute bottom-[max(1.05rem,var(--safe-bottom,0px))] left-1/2 z-30 w-[calc(100%-34px)] max-w-[396px] -translate-x-1/2 rounded-[34px] px-5 py-[12px]">
+        <div className="flex items-center justify-between">
           {DOCK.map(app => (
-            <button key={app.id} onClick={() => openApp(app.id)} className="xp-press">
-              <PrivateAppIcon appId={app.id} fallback={app.icon} size="sm" />
+            <button key={app.id + app.label} onClick={() => openApp(app.id)} className="xp-press">
+              <PrivateAppIcon appId={'dock-' + app.id} fallback={app.icon} variant={app.variant} size="sm" />
             </button>
           ))}
         </div>
