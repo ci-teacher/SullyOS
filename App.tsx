@@ -45,17 +45,17 @@ const App: React.FC = () => {
               {sharedPhoneMode ? <PrivatePhoneShell /> : <PhoneShell />}
               {sharedPhoneMode && <TeacherHomeGate />}
             </MusicProvider>
-            {/* 挂在 Provider 里面才能直接读 characters（省掉轮询 IndexedDB），
-                面板自身用 portal 渲染到 body，绕开上面那层 transform 对 fixed 定位的影响。 */}
-            <Amsg2DebugPanel />
+            {/* Generic SullyOS debug chrome stays available in normal mode, but the private
+                shared-phone build does not expose another product's debugging surface. */}
+            {!sharedPhoneMode && <Amsg2DebugPanel />}
           </OSProvider>
         </div>
       </div>
-      <BuildBadge />
-      <DevDebugPanel />
-      <VRBroadcast />
-      <WorldBroadcast />
-      <ChatBroadcast />
+      {!sharedPhoneMode && <BuildBadge />}
+      {!sharedPhoneMode && <DevDebugPanel />}
+      {!sharedPhoneMode && <VRBroadcast />}
+      {!sharedPhoneMode && <WorldBroadcast />}
+      {!sharedPhoneMode && <ChatBroadcast />}
     </>
   );
 };
