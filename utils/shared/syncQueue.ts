@@ -17,6 +17,7 @@ const MAX_BACKOFF_MS = 6 * 60 * 60_000;
 let flushing = false;
 let installed = false;
 let timer: number | null = null;
+const flushListener = () => { void flushSharedMutationQueue(); };
 
 function makeId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
@@ -129,19 +130,18 @@ export function installSharedMutationQueue(): void {
   if (installed || typeof window === 'undefined') return;
   installed = true;
 
-  const flush = () => { void flushSharedMutationQueue(); };
-  window.addEventListener('online', flush);
-  window.addEventListener('focus', flush);
+  window.addEventListener('online', flushListener);
+  window.addEventListener('focus', flushListener);
 
-  timer = window.setInterval(flush, 60_000);
-  flush();
+  timer = window.setInterval(flushListener, 60_000);
+  flushListener();
 }
 
 export function uninstallSharedMutationQueue(): void {
   if (!installed || typeof window === 'undefined') return;
   installed = false;
-  window.removeEventListener('online', () => { void flushSharedMutationQueue(); });
-  window.removeEventListener('focus', () => { void flushSharedMutationQueue(); });
+  window.removeEventListener('online', flushListener);
+  window.removeEventListener('focus', flushListener);
   if (timer !== null) window.clearInterval(timer);
   timer = null;
 }
