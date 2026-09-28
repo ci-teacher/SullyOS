@@ -12,7 +12,7 @@ import {
   type SharedResourceKind,
   type SharedResourceRecord,
 } from './resourceStore';
-import { deleteSharedGalleryImage, fetchSharedGallery, saveSharedGalleryImage } from './gallery';
+import { deleteSharedGalleryImage, fetchSharedGallery, installSharedGalleryRetry, saveSharedGalleryImage } from './gallery';
 import { installSharedMutationQueue } from './syncQueue';
 
 let installed = false;
@@ -49,6 +49,7 @@ export function installSharedPhoneFoundation(): void {
 
   markFirstUseGuideDone();
   installSharedMutationQueue();
+  installSharedGalleryRetry();
 
   // ── Exchange diary ──────────────────────────────────────────
   const originalGetDiaries = DB.getDiariesByCharId.bind(DB);
