@@ -1,5 +1,5 @@
 import { resolveSharedActor } from './identity';
-import { sharedRequest } from './sharedClient';
+import { mutateSharedOrQueue } from './syncQueue';
 import type { SharedActivity } from './types';
 
 const LOCAL_ACTIVITY_KEY = 'shared_phone_activity_buffer_v1';
@@ -45,7 +45,7 @@ export async function recordSharedActivity(
   };
 
   saveLocalActivity(activity);
-  await sharedRequest('/v1/activity', {
+  await mutateSharedOrQueue('/v1/activity', {
     method: 'POST',
     body: JSON.stringify(activity),
     timeoutMs: 3000,
