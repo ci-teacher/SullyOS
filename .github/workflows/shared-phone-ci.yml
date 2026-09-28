@@ -49,6 +49,34 @@ jobs:
           export HOST=127.0.0.1
           rm -f "$SHARED_PHONE_DB" "$SHARED_PHONE_DB-shm" "$SHARED_PHONE_DB-wal"
           rm -rf "$SHARED_PHONE_MEDIA_DIR"
+
+          # Simulate the schema already present on the real VPS before the newer migrations.
+          node --input-type=module <<'NODE'
+          import { DatabaseSync } from 'node:sqlite';
+          const legacyWakeDb = new DatabaseSync('/tmp/shared-phone-ci.sqlite');
+          legacyWakeDb.exec(`
+            CREATE TABLE diaries (
+              id TEXT PRIMARY KEY,
+              char_id TEXT NOT NULL,
+              date TEXT NOT NULL,
+              payload TEXT,
+              updated_by TEXT NOT NULL,
+              updated_at INTEGER NOT NULL
+            );
+            CREATE TABLE wake_signals (
+              id TEXT PRIMARY KEY,
+              reason TEXT NOT NULL,
+              priority INTEGER NOT NULL DEFAULT 0,
+              status TEXT NOT NULL DEFAULT 'pending',
+              payload TEXT,
+              created_at INTEGER NOT NULL,
+              expires_at INTEGER,
+              consumed_at INTEGER
+            );
+          `);
+          legacyWakeDb.close();
+          NODE
+
           node shared-server/server.mjs > /tmp/shared-phone-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
