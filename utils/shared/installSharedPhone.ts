@@ -1,6 +1,6 @@
 import { DB } from '../db';
 import type { Anniversary, DiaryEntry, GalleryImage, RoomNote, SocialPost, XhsActivityRecord } from '../../types';
-import { deleteSharedDiary, fetchSharedDiaries, mergeDiaryCopies, saveSharedDiary } from './journal';
+import { deleteSharedDiary, fetchSharedDiaryRecords, mergeDiaryCopies, saveSharedDiary } from './journal';
 import { recordSharedActivity } from './activity';
 import {
   deleteSharedResource,
@@ -56,10 +56,17 @@ export function installSharedPhoneFoundation(): void {
   DB.getDiariesByCharId = async (charId: string): Promise<DiaryEntry[]> => {
     const local = await originalGetDiaries(charId);
     try {
-      const remote = await fetchSharedDiaries(charId);
+      const remote = await fetchSharedDiaryRecords(charId);
       const merged = mergeDiaryCopies(local, remote);
+      const mergedIds = new Set(merged.map(item => item.id));
 
-      for (const diary of remote) {
+      for (const item of local) {
+        if (!mergedIds.has(item.id)) await originalDeleteDiary(item.id);
+      }
+
+      for (const record of remote) {
+        if (record.deleted || !record.diary) continue;
+        const diary = record.diary;
         const localMatch = local.find(item => item.id === diary.id || (item.charId === diary.charId && item.date === diary.date));
         if (!localMatch || (diary.timestamp || 0) > (localMatch.timestamp || 0)) {
           await originalSaveDiary(diary);
