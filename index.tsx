@@ -10,6 +10,9 @@ import { installIOSStandaloneWorkaround } from './utils/iosStandalone';
 import { installWakeListener } from './utils/proactivePushConfig';
 import { initAnalytics } from './utils/analytics';
 import { Capacitor } from '@capacitor/core';
+import { installSharedPhoneFoundation } from './utils/shared/installSharedPhone';
+
+installSharedPhoneFoundation();
 
 // 默认构建不开启时 Rollup 会整段裁掉；普通浏览器/PWA 不加载原生插件、不申请权限。
 if (import.meta.env.VITE_AMSG_NATIVE_PUSH === 'true' && Capacitor.isNativePlatform()) {
