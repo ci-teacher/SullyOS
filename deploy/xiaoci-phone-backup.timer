@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Xiaoci Shared Phone Backup
+
+[Timer]
+OnCalendar=*-*-* 04:20:00
+Persistent=true
+RandomizedDelaySec=900
+Unit=xiaoci-phone-backup.service
+
+[Install]
+WantedBy=timers.target
