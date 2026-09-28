@@ -13,6 +13,7 @@ import {
   type SharedResourceRecord,
 } from './resourceStore';
 import { deleteSharedGalleryImage, fetchSharedGallery, saveSharedGalleryImage } from './gallery';
+import { installSharedMutationQueue } from './syncQueue';
 
 let installed = false;
 
@@ -47,6 +48,7 @@ export function installSharedPhoneFoundation(): void {
   installed = true;
 
   markFirstUseGuideDone();
+  installSharedMutationQueue();
 
   // ── Exchange diary ──────────────────────────────────────────
   const originalGetDiaries = DB.getDiariesByCharId.bind(DB);
