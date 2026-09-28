@@ -56,7 +56,7 @@ export interface SharedEvent {
   consumedAt?: number;
 }
 
-export type SharedSessionKind = 'cedar' | 'coc' | 'game';
+export type SharedSessionKind = 'cedar' | 'coc' | 'game' | 'reading' | 'movie' | 'listening';
 export type SharedSessionStatus = 'active' | 'paused' | 'completed' | 'archived';
 
 export interface SharedSession {
