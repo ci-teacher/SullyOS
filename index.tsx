@@ -23,16 +23,24 @@ if (import.meta.env.VITE_AMSG_NATIVE_PUSH === 'true' && Capacitor.isNativePlatfo
   }
 }
 
-// Register the keep-alive Service Worker early so it's ready before any AI calls
-KeepAlive.init().then(() => {
-  // Resume any active proactive schedule after SW is ready
-  ProactiveChat.resume();
-  // Resume 「彼方」 autonomous-login schedules
-  VRScheduler.resume();
-  void ActiveMsgRuntime.init();
-  // Record every wake the SW reports so the diagnostic panel can show "last received".
-  installWakeListener();
-});
+const SHARED_PHONE_MODE = import.meta.env.VITE_SHARED_PHONE_MODE === 'true';
+
+// Private shared-phone mode uses the VPS Wake Engine + ChatGPT Work as the proactive brain.
+// Do not start SullyOS's original API-backed proactive runtimes here: they belong to the
+// generic multi-model product and otherwise keep probing an API configuration we intentionally
+// do not use in this private build.
+if (!SHARED_PHONE_MODE) {
+  // Register the keep-alive Service Worker early so it's ready before any AI calls
+  KeepAlive.init().then(() => {
+    // Resume any active proactive schedule after SW is ready
+    ProactiveChat.resume();
+    // Resume 「彼方」 autonomous-login schedules
+    VRScheduler.resume();
+    void ActiveMsgRuntime.init();
+    // Record every wake the SW reports so the diagnostic panel can show "last received".
+    installWakeListener();
+  });
+}
 
 installIOSStandaloneWorkaround();
 
