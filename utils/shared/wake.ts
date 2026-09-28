@@ -10,6 +10,10 @@ export interface SharedWakeSignal {
   expiresAt?: number;
   consumedAt?: number;
   dedupeKey?: string;
+  claimedAt?: number;
+  claimExpiresAt?: number;
+  resolution?: 'acted' | 'no_action' | 'failed';
+  result?: Record<string, unknown>;
 }
 
 export async function peekWakeSignal(): Promise<SharedWakeSignal | null> {
@@ -22,12 +26,25 @@ export async function claimWakeSignal(): Promise<SharedWakeSignal | null> {
   return result?.wake || null;
 }
 
-export async function consumeWakeSignal(id: string): Promise<boolean> {
-  return sharedMutation(`/v1/wake/${encodeURIComponent(id)}/consume`, { method: 'POST' });
+export async function consumeWakeSignal(
+  id: string,
+  resolution: 'acted' | 'no_action' = 'acted',
+  result?: Record<string, unknown>,
+): Promise<boolean> {
+  return sharedMutation(`/v1/wake/${encodeURIComponent(id)}/consume`, {
+    method: 'POST',
+    body: JSON.stringify({ resolution, result }),
+  });
 }
 
-export async function failWakeSignal(id: string): Promise<boolean> {
-  return sharedMutation(`/v1/wake/${encodeURIComponent(id)}/fail`, { method: 'POST' });
+export async function failWakeSignal(
+  id: string,
+  result?: Record<string, unknown>,
+): Promise<boolean> {
+  return sharedMutation(`/v1/wake/${encodeURIComponent(id)}/fail`, {
+    method: 'POST',
+    body: JSON.stringify({ result }),
+  });
 }
 
 export async function createWakeSignal(input: {
