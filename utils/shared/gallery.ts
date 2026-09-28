@@ -1,7 +1,6 @@
 import type { GalleryImage } from '../../types';
 import { dataUrlToBlob, getBlobForRef, isBlobRef, putImageBlob } from '../blobRef';
 import { sharedRequestBlob, sharedUploadBlob } from './sharedClient';
-import { deleteSharedMedia } from './media';
 import {
   deleteSharedResource,
   getLocalResourceVersion,
@@ -106,7 +105,7 @@ async function uploadGalleryImage(image: GalleryImage): Promise<boolean> {
   const blob = await imageBlob(image.url);
 
   if (blob) {
-    mediaId = `gallery-${image.id}`;
+    mediaId = `gallery-${image.id}-${updatedAt}`;
     const uploaded = await sharedUploadBlob(`/v1/media/${encodeURIComponent(mediaId)}`, blob);
     if (!uploaded) return false;
   }
@@ -157,5 +156,4 @@ export function uninstallSharedGalleryRetry(): void {
 export async function deleteSharedGalleryImage(imageId: string, charId = ''): Promise<void> {
   removePendingGallery(imageId);
   await deleteSharedResource('gallery', imageId, charId);
-  void deleteSharedMedia(`gallery-${imageId}`);
 }
