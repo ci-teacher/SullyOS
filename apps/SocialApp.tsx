@@ -894,13 +894,15 @@ ${buildSparkCommentHistory(post)}
                 */}
                 <div className="flex-1 w-full h-full flex flex-col animate-slide-up relative overflow-hidden">
                     {/* Header —— 自理安全区：--safe-top 让开刘海（带 iOS env 偶发返回 0 的 JS 兜底；非刘海设备保底 12px） */}
-                    <div className="flex items-center justify-between px-4 bg-white/60 backdrop-blur-xl border-b border-white/20 shrink-0 relative z-20" style={{ paddingTop: 'max(12px, var(--safe-top))', paddingBottom: '12px' }}>
-                        <button onClick={handleClosePost} className="p-2 -m-2 active:opacity-60"><Icons.Back /></button>
-                        <div className="flex items-center gap-2">
-                            <TokenImg value={selectedPost.authorAvatar} className="w-8 h-8 rounded-full object-cover border border-white/50" />
-                            <span className="text-sm font-bold text-slate-800">{selectedPost.authorName}</span>
+                    <div className="xp-native-header shrink-0 relative z-20">
+                      <div className="xp-native-nav-grid">
+                        <button onClick={handleClosePost} className="xp-native-back active:opacity-60"><Icons.Back /></button>
+                        <div className="flex min-w-0 items-center justify-center gap-2">
+                            <TokenImg value={selectedPost.authorAvatar} className="w-7 h-7 rounded-full object-cover border border-white/50" />
+                            <span className="truncate text-sm font-bold text-[var(--xp-app-text)]">{selectedPost.authorName}</span>
                         </div>
-                        <button onClick={() => { setShowShareModal(true); trackEvent('打开分享帖子面板'); }} className="p-2 -m-2 active:opacity-60"><Icons.Share onClick={() => setShowShareModal(true)} className="w-6 h-6 text-slate-800 cursor-pointer hover:text-[var(--xp-app-accent)]" /></button>
+                        <button onClick={() => { setShowShareModal(true); trackEvent('打开分享帖子面板'); }} className="xp-native-back active:opacity-60"><Icons.Share onClick={() => setShowShareModal(true)} className="cursor-pointer" /></button>
+                      </div>
                     </div>
 
                     {/* Scrollable Area */}
