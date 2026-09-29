@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   CalendarBlank, Clock, EnvelopeSimple, Gear, Heart, House,
   ImageSquare, MusicNote, NotePencil, Sparkle, ListHeart, Shapes,
@@ -63,18 +63,7 @@ const DOCK: Tile[] = [
 
 const PrivateLauncher: React.FC<Props> = ({ onOpenPrivateModule }) => {
   const { openApp } = useOS();
-  const [now, setNow] = useState(() => new Date());
   const [mascotMissing, setMascotMissing] = useState(false);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const time = useMemo(
-    () => now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
-    [now],
-  );
 
   const openTile = (tile: Tile) => {
     if (tile.privateModule) {
@@ -86,18 +75,7 @@ const PrivateLauncher: React.FC<Props> = ({ onOpenPrivateModule }) => {
 
   return (
     <div className="xp-home-wallpaper relative h-full w-full overflow-hidden bg-[#FFF8EF] text-[#7D3037]">
-      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-7 pt-[max(1.05rem,var(--safe-top,0px))] text-[17px] font-bold text-[#B8424E]">
-        <span>{time}</span>
-        <div className="flex items-center gap-2 text-[15px]">
-          <span className="tracking-[-.14em]">▮▮▮</span>
-          <span className="text-[16px]">⌁</span>
-          <span className="inline-block h-[13px] w-[23px] rounded-[4px] border-2 border-[#B8424E]">
-            <span className="m-[2px] block h-[5px] rounded-[2px] bg-[#B8424E]" />
-          </span>
-        </div>
-      </div>
-
-      <main className="relative z-10 mx-auto h-full w-full max-w-[430px] px-7 pt-[max(8.7rem,calc(var(--safe-top,0px)+7.5rem))]">
+      <main className="relative z-10 mx-auto h-full w-full max-w-[430px] px-7 pt-[92px]">
         <div className="grid grid-cols-4 gap-x-5 gap-y-[22px]">
           {APPS.map(tile => (
             <button
