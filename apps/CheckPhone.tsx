@@ -183,7 +183,7 @@ const TermHeader: React.FC<{ title: string; sub?: string; accent: string; onBack
         <div className="shrink-0 z-20">
             <StatusStrip />
             <div className="h-14 flex items-center justify-between px-4">
-                <button onClick={onBack} className="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-white/80 bg-white/[0.05] border border-white/[0.08] active:scale-90 transition">
+                <button onClick={onBack} className="xp-native-back -ml-1 active:scale-95 transition">
                     <CaretLeft size={18} weight="bold" />
                 </button>
                 <div className="flex-1 text-center px-2">
@@ -3640,16 +3640,15 @@ ${olderText}
     // ============================================================
     if (view === 'select') {
         return (
-            <div className="absolute inset-0 flex flex-col overflow-hidden text-white"
-                style={{ background: 'radial-gradient(120% 80% at 50% 0%, #161826 0%, #0a0b10 60%)' }}>
+            <div className="xp-native-page absolute inset-0 flex flex-col overflow-hidden">
                 <StatusStrip />
                 <div className="h-14 flex items-center justify-between px-4 shrink-0">
                     <button onClick={closeApp} className="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-white/80 bg-white/[0.05] border border-white/[0.08] active:scale-90 transition">
                         <CaretLeft size={18} weight="bold" />
                     </button>
-                    <span className="font-semibold tracking-[0.25em] uppercase text-[13px] text-white/80">Target Device</span>
+                    <span className="font-bold tracking-[0.18em] uppercase text-[11px] text-[var(--xp-app-text)]">Target Device</span>
                     <button onClick={() => { setPhoneApiTestResult(null); setShowApiSettings(true); }} aria-label="查手机 API 设置"
-                        className="relative w-9 h-9 rounded-full flex items-center justify-center text-white/75 bg-white/[0.05] border border-white/[0.08] active:scale-90 transition">
+                        className="xp-native-back relative active:scale-95 transition">
                         <GearSix size={17} weight={phoneApiFollowsDefault ? 'regular' : 'fill'} />
                         {!phoneApiFollowsDefault && <span className="absolute right-1.5 bottom-1.5 h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_6px_#a78bfa]" />}
                     </button>
@@ -3668,7 +3667,7 @@ ${olderText}
                             <div className="flex-1 min-h-0 px-5 grid grid-cols-2 grid-rows-3 gap-4 content-center pb-4 pt-2">
                                 {pageChars.map(c => (
                                     <div key={c.id} onClick={() => handleSelectChar(c)}
-                                        className="min-h-0 rounded-3xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-xl p-4 flex flex-col items-center justify-center gap-3 cursor-pointer active:scale-95 transition group hover:border-violet-400/50 hover:shadow-[0_0_24px_rgba(157,124,255,0.25)] relative overflow-hidden">
+                                        className="xp-card min-h-0 p-4 flex flex-col items-center justify-center gap-3 cursor-pointer active:scale-95 transition group relative overflow-hidden">
                                         <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full blur-3xl bg-violet-500/0 group-hover:bg-violet-500/20 transition" />
                                         <div className="w-20 h-20 rounded-full p-[2px] border-2 border-white/15 group-hover:border-violet-400/70 transition-colors relative z-10 shrink-0">
                                             <TokenImg value={c.avatar} className="w-full h-full rounded-full object-cover grayscale group-hover:grayscale-0 transition-all" />
