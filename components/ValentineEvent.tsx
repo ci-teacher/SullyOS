@@ -706,7 +706,7 @@ export const ValentineSession: React.FC<ValentineSessionProps> = ({ charId, onCl
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-600"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
                     </button>
                     <span className="font-bold text-slate-700">特别时光 - 情人节</span>
-                    <div className="w-8" />
+                    <div className="w-[var(--xp-back-size)]" />
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6" style={{ paddingBottom: 'calc(1.5rem + var(--safe-bottom))' }}>
@@ -1534,9 +1534,9 @@ export const SpecialMomentsApp: React.FC = () => {
     return (
         <div className="xp-native-page h-full w-full flex flex-col font-light">
             {/* Header */}
-            <div className="xp-native-header shrink-0" style={{ paddingTop: 'var(--safe-top)' }}>
-                <div className="h-16 flex items-center justify-between px-4">
-                    <button onClick={closeApp} className="p-2 -ml-2 rounded-full hover:bg-pink-50">
+            <div className="xp-native-header shrink-0">
+                <div className="xp-native-nav-grid">
+                    <button onClick={closeApp} className="xp-native-back">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-600"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
                     </button>
                     <span className="font-bold text-[var(--xp-app-text)]">特别日子</span>
