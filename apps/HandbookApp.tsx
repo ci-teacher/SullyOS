@@ -376,7 +376,7 @@ const HandbookApp: React.FC = () => {
         return (
             <div
                 className="absolute z-30 left-0 right-0 px-3 pointer-events-none"
-                style={{ top: 'calc(var(--xp-statusbar-h) + 8px)' }}
+                style={{ top: '8px' }}
             >
                 <div className="flex items-center justify-between gap-2 pointer-events-auto">
                     <button
