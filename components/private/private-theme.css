@@ -379,3 +379,64 @@
   background: rgba(255,255,255,.85);
   color: var(--xp-app-text);
 }
+
+
+/* Shared chrome applied to inherited app pages during the gradual private rewrite. */
+.xiaoci-private .xp-native-page {
+  background: var(--xp-app-bg) !important;
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-native-header {
+  background: rgba(255,253,249,.86) !important;
+  border-bottom: 1px solid var(--xp-app-line) !important;
+  color: var(--xp-app-text);
+  box-shadow: none !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.xiaoci-private .xp-native-back {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--xp-app-line);
+  border-radius: 11px;
+  background: rgba(255,255,255,.82);
+  color: var(--xp-app-text);
+  box-shadow: 0 4px 12px rgba(116,67,70,.035);
+}
+
+.xiaoci-private .xp-native-back svg {
+  width: 18px;
+  height: 18px;
+  color: inherit !important;
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="social"] {
+  --xp-app-bg: #FFFDF9;
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="gallery"] {
+  --xp-app-bg: #FFFDF9;
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="room"] {
+  --xp-app-bg: #FFFDF9;
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="special_moments"] {
+  --xp-app-bg: #FFFDF9;
+}
+
+/* Check Phone contains a deliberate dark simulated device after target selection.
+   Only its entry/chrome is normalized. */
+.xiaoci-private .xp-app-surface[data-xp-app="check_phone"] .xp-native-page {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(217,75,85,.17) 0 34px, transparent 35px),
+    radial-gradient(circle at 7% 76%, rgba(217,75,85,.10) 0 42px, transparent 43px),
+    var(--xp-app-bg) !important;
+}
