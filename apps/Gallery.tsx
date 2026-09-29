@@ -460,9 +460,9 @@ CRITICAL: Stay in character. If there's conversation context, your comment shoul
 
             {/* Header */}
             {view !== 'detail' && (
-                <div className="xp-native-header shrink-0 z-10 sticky top-0" style={{ paddingTop: 'var(--safe-top)' }}>
-                    <div className="h-16 flex items-center px-4">
-                        <button onClick={handleBack} className="xp-native-back -ml-1 active:scale-95 transition-transform">
+                <div className="xp-native-header shrink-0 z-10 sticky top-0">
+                    <div className="xp-native-nav">
+                        <button onClick={handleBack} className="xp-native-back active:scale-95 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-[var(--xp-app-text)]"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
                         </button>
                         <h1 className="text-[19px] font-bold text-[var(--xp-app-text)] ml-2 tracking-[-0.025em]">
