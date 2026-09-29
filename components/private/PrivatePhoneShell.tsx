@@ -61,10 +61,16 @@ const PrivatePhoneShell: React.FC = () => {
     dismissError,
   } = useOS();
   const [privateModule, setPrivateModule] = useState<PrivateModuleId | null>(null);
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     if (isLocked) unlock();
   }, [isLocked, unlock]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (activeApp !== AppID.Launcher) setPrivateModule(null);
@@ -127,17 +133,30 @@ const PrivatePhoneShell: React.FC = () => {
   return (
     <div className="xiaoci-private xp-desktop-stage">
       <div className="xp-phone-frame">
-        <Suspense fallback={<Loading />}>
-          <div
-            key={privateModule || activeApp}
-            className="xp-app-surface h-full w-full"
-            data-xp-app={privateModule || activeApp}
-          >
-            {renderApp()}
+        <div className="xp-system-statusbar" aria-hidden="true">
+          <span className="xp-status-time">
+            {now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}
+          </span>
+          <div className="xp-status-icons">
+            <span className="xp-status-signal" />
+            <span className="xp-status-wifi">⌁</span>
+            <span className="xp-status-battery"><i /></span>
           </div>
-        </Suspense>
+        </div>
 
-        <div className="pointer-events-none absolute left-1/2 top-[max(1rem,var(--safe-top,0px))] z-[150] flex w-[min(88%,390px)] -translate-x-1/2 flex-col gap-2">
+        <div className="xp-screen-content">
+          <Suspense fallback={<Loading />}>
+            <div
+              key={privateModule || activeApp}
+              className="xp-app-surface h-full w-full"
+              data-xp-app={privateModule || activeApp}
+            >
+              {renderApp()}
+            </div>
+          </Suspense>
+        </div>
+
+        <div className="pointer-events-none absolute left-1/2 top-[calc(var(--xp-statusbar-h)+12px)] z-[150] flex w-[min(88%,390px)] -translate-x-1/2 flex-col gap-2">
           {toasts.map(toast => (
             <div
               key={toast.id}
