@@ -900,7 +900,7 @@ ${buildSparkCommentHistory(post)}
                             <TokenImg value={selectedPost.authorAvatar} className="w-8 h-8 rounded-full object-cover border border-white/50" />
                             <span className="text-sm font-bold text-slate-800">{selectedPost.authorName}</span>
                         </div>
-                        <button onClick={() => { setShowShareModal(true); trackEvent('打开分享帖子面板'); }} className="p-2 -m-2 active:opacity-60"><Icons.Share onClick={() => setShowShareModal(true)} className="w-6 h-6 text-slate-800 cursor-pointer hover:text-[#ff2442]" /></button>
+                        <button onClick={() => { setShowShareModal(true); trackEvent('打开分享帖子面板'); }} className="p-2 -m-2 active:opacity-60"><Icons.Share onClick={() => setShowShareModal(true)} className="w-6 h-6 text-slate-800 cursor-pointer hover:text-[var(--xp-app-accent)]" /></button>
                     </div>
 
                     {/* Scrollable Area */}
@@ -930,14 +930,14 @@ ${buildSparkCommentHistory(post)}
                             </div>
                             
                             <div className="space-y-6">
-                                {selectedPost.comments.length === 0 && !loadingComments && <div className="text-center text-slate-300 text-xs py-10">快来抢沙发...</div>}
+                                {selectedPost.comments.length === 0 && !loadingComments && <div className="text-center text-[var(--xp-app-faint)] text-xs py-10">快来抢沙发...</div>}
                                 {selectedPost.comments.map(c => (
                                     <div key={c.id} className="flex gap-3 animate-fade-in group">
                                         <TokenImg value={c.authorAvatar} className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-100" />
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
                                                 <span className={`text-xs font-bold ${c.isCharacter ? 'text-slate-800' : 'text-slate-500'}`}>{c.authorName}</span>
-                                                <div className="flex items-center gap-1 text-slate-400 cursor-pointer hover:text-[#ff2442]">
+                                                <div className="flex items-center gap-1 text-slate-400 cursor-pointer hover:text-[var(--xp-app-accent)]">
                                                     <Icons.Heart filled={false} className="w-3.5 h-3.5" />
                                                     <span className="text-[10px]">{c.likes}</span>
                                                 </div>
@@ -963,7 +963,7 @@ ${buildSparkCommentHistory(post)}
                                     placeholder="说点什么..."
                                     className="bg-transparent text-sm w-full outline-none text-slate-800 placeholder:text-slate-400 disabled:opacity-50"
                                 />
-                                {commentInput.trim() && <button disabled={loadingComments || isReplyingToUser} onClick={handleSendComment} className="text-[#ff2442] font-bold text-sm animate-fade-in disabled:opacity-40">发送</button>}
+                                {commentInput.trim() && <button disabled={loadingComments || isReplyingToUser} onClick={handleSendComment} className="text-[var(--xp-app-accent)] font-bold text-sm animate-fade-in disabled:opacity-40">发送</button>}
                             </div>
                             <div className="flex gap-5 text-slate-600 shrink-0 items-center">
                                 <div className="flex flex-col items-center gap-0.5">
@@ -984,7 +984,7 @@ ${buildSparkCommentHistory(post)}
 
     return (
         // Main Container with Premium Gradient Background
-        <div className="h-full w-full bg-gradient-to-br from-rose-50 via-slate-50 to-teal-50 flex flex-col font-sans relative text-slate-900 overflow-hidden">
+        <div className="xp-native-page h-full w-full flex flex-col font-sans relative overflow-hidden">
             
             {/* --- Modals (Settings, Share) --- */}
             <Modal isOpen={showSettings} title="身份管理" onClose={() => setShowSettings(false)}>
@@ -1000,7 +1000,7 @@ ${buildSparkCommentHistory(post)}
                                 <div className="flex items-center gap-2">
                                     <TokenImg value={c.avatar} className="w-6 h-6 rounded-full object-cover" />
                                     <span className="text-sm font-bold text-slate-700">{c.name}</span>
-                                    <button onClick={() => addSubAccount(c.id)} className="ml-auto text-[10px] bg-[#ff2442] text-white px-2 py-1 rounded-full shadow-sm active:scale-95 transition-transform">+ 添加马甲</button>
+                                    <button onClick={() => addSubAccount(c.id)} className="ml-auto text-[10px] bg-[var(--xp-app-accent)] text-white px-2 py-1 rounded-full shadow-sm active:scale-95 transition-transform">+ 添加马甲</button>
                                 </div>
                                 
                                 <div className="space-y-2 pl-4 border-l-2 border-slate-100">
@@ -1012,12 +1012,12 @@ ${buildSparkCommentHistory(post)}
                                                     <input 
                                                         value={acct.handle} 
                                                         onChange={(e) => updateSubAccount(c.id, acct.id, 'handle', e.target.value)} 
-                                                        className="w-full text-sm font-bold text-slate-800 border-b border-dashed border-slate-200 focus:border-[#ff2442] outline-none py-1" 
+                                                        className="w-full text-sm font-bold text-slate-800 border-b border-dashed border-slate-200 focus:border-[var(--xp-app-accent)] outline-none py-1" 
                                                     />
                                                 </div>
                                                 <button 
                                                     onClick={() => deleteSubAccount(c.id, acct.id)}
-                                                    className="text-slate-300 hover:text-red-400 p-1"
+                                                    className="text-[var(--xp-app-faint)] hover:text-red-400 p-1"
                                                     title="删除"
                                                 >
                                                     ×
@@ -1043,7 +1043,7 @@ ${buildSparkCommentHistory(post)}
                     </div>
                     <div className="flex gap-3 pt-2">
                         <button onClick={handleClearFeed} className="flex-1 py-3 bg-white border border-slate-200 text-slate-500 font-bold rounded-xl text-xs active:bg-slate-50">清空推荐流</button>
-                        <button onClick={() => setShowSettings(false)} className="flex-1 py-3 bg-[#ff2442] text-white font-bold rounded-xl text-xs shadow-lg shadow-red-200 active:scale-95 transition-transform">完成</button>
+                        <button onClick={() => setShowSettings(false)} className="flex-1 py-3 bg-[var(--xp-app-accent)] text-white font-bold rounded-xl text-xs shadow-lg shadow-red-200 active:scale-95 transition-transform">完成</button>
                     </div>
                 </div>
             </Modal>
@@ -1063,16 +1063,16 @@ ${buildSparkCommentHistory(post)}
 
             {/* --- Create Post Modal (Full Screen Overlay) --- */}
             {isCreateOpen && (
-                <div className="absolute inset-0 z-50 bg-white flex flex-col animate-slide-up">
+                <div className="absolute inset-0 z-50 bg-[var(--xp-app-bg)] flex flex-col animate-slide-up">
                     {/* Create Header —— 自理安全区：外层扛 safe-top + 背景，内层保持 h-14 内容栏（同主栏，避开 border-box 吃 padding） */}
-                    <div className="sticky top-0 z-20 bg-white border-b border-slate-50" style={{ paddingTop: 'var(--safe-top)' }}>
+                    <div className="xp-native-header sticky top-0 z-20" style={{ paddingTop: 'var(--safe-top)' }}>
                         <div className="h-14 flex items-center justify-between px-4">
                             <button onClick={() => setIsCreateOpen(false)} className="text-slate-600 text-sm font-bold px-2 py-1">取消</button>
                             <span className="text-sm font-bold text-slate-800">发布笔记</span>
                             <button
                                 onClick={handleCreatePost}
                                 disabled={!newPostContent.trim()}
-                                className={`px-4 py-1.5 rounded-full text-xs font-bold text-white transition-all ${newPostContent.trim() ? 'bg-[#ff2442] shadow-md shadow-red-200' : 'bg-slate-200 text-slate-400'}`}
+                                className={`px-4 py-1.5 rounded-full text-xs font-bold text-white transition-all ${newPostContent.trim() ? 'bg-[var(--xp-app-accent)] shadow-md shadow-red-200' : 'bg-slate-200 text-slate-400'}`}
                             >
                                 发布
                             </button>
@@ -1085,13 +1085,13 @@ ${buildSparkCommentHistory(post)}
                             value={newPostTitle} 
                             onChange={e => setNewPostTitle(e.target.value)} 
                             placeholder="填写标题会有更多赞哦~" 
-                            className="text-xl font-black placeholder:text-slate-300 outline-none mb-4 w-full" 
+                            className="text-xl font-black placeholder:text-[var(--xp-app-faint)] outline-none mb-4 w-full" 
                         />
                         <textarea 
                             value={newPostContent} 
                             onChange={e => setNewPostContent(e.target.value)} 
                             placeholder="分享你此刻的想法..." 
-                            className="w-full h-auto min-h-[200px] resize-none outline-none text-base leading-relaxed placeholder:text-slate-300 font-medium" 
+                            className="w-full h-auto min-h-[200px] resize-none outline-none text-base leading-relaxed placeholder:text-[var(--xp-app-faint)] font-medium" 
                         />
                         
                         {/* Sticker Selector - Flowing after text */}
@@ -1102,7 +1102,7 @@ ${buildSparkCommentHistory(post)}
                                     <button
                                         key={sticker.code}
                                         onClick={() => setNewPostEmoji(sticker.code)}
-                                        className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all shrink-0 ${newPostEmoji === sticker.code ? 'border-[#ff2442] bg-red-50' : 'border-slate-100'}`}
+                                        className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all shrink-0 ${newPostEmoji === sticker.code ? 'border-[var(--xp-app-accent)] bg-red-50' : 'border-slate-100'}`}
                                     >
                                         <img src={twemojiUrl(sticker.code)} alt={sticker.label} className="w-7 h-7" />
                                     </button>
@@ -1119,14 +1119,14 @@ ${buildSparkCommentHistory(post)}
                 {/* Top Nav - Glass —— 自理安全区：外层扛 safe-top + 背景（无固定高度，padding 正常撑开到刘海/灵动岛下），
                     内层保持 h-11 内容栏、文字居中。不能把 paddingTop 直接加到 h-11 上：border-box 会把 padding 吃进
                     固定高度，content-box 塌成 0，文字被挤到白条下沿、跨在白/渐变交界上被劈开。sticky 必须留在外层。 */}
-                <div className="sticky top-0 z-30 bg-white/60 backdrop-blur-xl border-b border-white/20" style={{ paddingTop: 'var(--safe-top)' }}>
+                <div className="xp-native-header sticky top-0 z-30" style={{ paddingTop: 'var(--safe-top)' }}>
                     <div className="h-11 flex items-center justify-between px-4">
-                        <button onClick={closeApp} className="p-1"><Icons.Back onClick={closeApp} /></button>
-                        <div className="flex gap-6 text-base font-bold text-slate-300">
-                            <button className={`${activeTab === 'home' ? 'text-slate-800 scale-110 border-b-2 border-[#ff2442] pb-1' : 'hover:text-slate-500'} transition-all`} onClick={() => { setActiveTab('home'); trackEvent('切换 Spark 主标签', { tab: 'home' }); }}>发现</button>
-                            <button className={`${activeTab === 'me' ? 'text-slate-800 scale-110 border-b-2 border-[#ff2442] pb-1' : 'hover:text-slate-500'} transition-all`} onClick={() => { setActiveTab('me'); trackEvent('切换 Spark 主标签', { tab: 'me' }); }}>我的</button>
+                        <button onClick={closeApp} className="xp-native-back"><Icons.Back onClick={closeApp} /></button>
+                        <div className="flex gap-6 text-base font-bold text-[var(--xp-app-faint)]">
+                            <button className={`${activeTab === 'home' ? 'text-[var(--xp-app-text)] border-b-2 border-[var(--xp-app-accent)] pb-1' : 'hover:text-slate-500'} transition-all`} onClick={() => { setActiveTab('home'); trackEvent('切换 Spark 主标签', { tab: 'home' }); }}>发现</button>
+                            <button className={`${activeTab === 'me' ? 'text-slate-800 scale-110 border-b-2 border-[var(--xp-app-accent)] pb-1' : 'hover:text-slate-500'} transition-all`} onClick={() => { setActiveTab('me'); trackEvent('切换 Spark 主标签', { tab: 'me' }); }}>我的</button>
                         </div>
-                        <button onClick={() => { setShowSettings(true); trackEvent('打开身份管理面板'); }} className="text-slate-800 font-bold text-sm">管理</button>
+                        <button onClick={() => { setShowSettings(true); trackEvent('打开身份管理面板'); }} className="text-[var(--xp-app-text)] font-semibold text-[12px]">管理</button>
                     </div>
                 </div>
 
@@ -1138,11 +1138,11 @@ ${buildSparkCommentHistory(post)}
                             {/* Refresh Button - Above Posts */}
                             <div className="flex items-center justify-center py-3">
                                 {isRefreshing ? (
-                                    <div className="text-center text-xs text-[#ff2442] font-bold animate-pulse flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-[#ff2442] border-t-transparent rounded-full animate-spin"></div> 正在获取新鲜事...
+                                    <div className="text-center text-xs text-[var(--xp-app-accent)] font-bold animate-pulse flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-[var(--xp-app-accent)] border-t-transparent rounded-full animate-spin"></div> 正在获取新鲜事...
                                     </div>
                                 ) : (
-                                    <button onClick={handleRefresh} className="px-6 py-2 bg-white/80 backdrop-blur-md rounded-full text-xs font-bold text-slate-500 shadow-sm border border-white hover:text-[#ff2442] active:scale-95 transition-all">
+                                    <button onClick={handleRefresh} className="xp-secondary-button px-5 py-2 text-xs font-semibold active:scale-95 transition-all">
                                         点击刷新推荐流
                                     </button>
                                 )}
@@ -1234,8 +1234,8 @@ ${buildSparkCommentHistory(post)}
 
                             {/* Sticky Tabs */}
                             <div className="sticky top-0 bg-white/90 backdrop-blur-md z-10 border-b border-slate-100 flex">
-                                <button onClick={() => { setProfileTab('notes'); trackEvent('切换个人主页子标签', { tab: 'notes' }); }} className={`flex-1 py-3 text-sm font-bold transition-colors ${profileTab === 'notes' ? 'text-slate-900 border-b-2 border-[#ff2442]' : 'text-slate-400'}`}>笔记</button>
-                                <button onClick={() => { setProfileTab('collects'); trackEvent('切换个人主页子标签', { tab: 'collects' }); }} className={`flex-1 py-3 text-sm font-bold transition-colors ${profileTab === 'collects' ? 'text-slate-900 border-b-2 border-[#ff2442]' : 'text-slate-400'}`}>收藏</button>
+                                <button onClick={() => { setProfileTab('notes'); trackEvent('切换个人主页子标签', { tab: 'notes' }); }} className={`flex-1 py-3 text-sm font-bold transition-colors ${profileTab === 'notes' ? 'text-slate-900 border-b-2 border-[var(--xp-app-accent)]' : 'text-slate-400'}`}>笔记</button>
+                                <button onClick={() => { setProfileTab('collects'); trackEvent('切换个人主页子标签', { tab: 'collects' }); }} className={`flex-1 py-3 text-sm font-bold transition-colors ${profileTab === 'collects' ? 'text-slate-900 border-b-2 border-[var(--xp-app-accent)]' : 'text-slate-400'}`}>收藏</button>
                             </div>
 
                             <div className="p-2 min-h-[300px] bg-slate-50/50 pb-24">
@@ -1254,8 +1254,8 @@ ${buildSparkCommentHistory(post)}
                                     ))}
                                 </div>
                                 {feed.filter(p => profileTab === 'notes' ? (p.authorType === 'user' || (!p.authorType && p.authorName === socialProfile.name)) : p.isCollected).length === 0 && (
-                                    <div className="flex flex-col items-center justify-center py-20 text-slate-300 gap-2">
-                                        <Package size={48} className="text-slate-300 opacity-30" />
+                                    <div className="flex flex-col items-center justify-center py-20 text-[var(--xp-app-faint)] gap-2">
+                                        <Package size={48} className="text-[var(--xp-app-faint)] opacity-30" />
                                         <span className="text-xs">空空如也</span>
                                     </div>
                                 )}
@@ -1269,7 +1269,7 @@ ${buildSparkCommentHistory(post)}
                     <button onClick={() => { setActiveTab('home'); trackEvent('切换 Spark 主标签', { tab: 'home' }); }} className={`text-sm font-medium flex flex-col items-center justify-center gap-0.5 transition-all w-12 h-12 rounded-full ${activeTab === 'home' ? 'text-slate-900 bg-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
                         <House size={24} weight={activeTab === 'home' ? 'fill' : 'regular'} />
                     </button>
-                    <button onClick={() => { setIsCreateOpen(true); trackEvent('打开发布笔记面板'); }} className="w-12 h-12 bg-[#ff2442] text-white rounded-full flex items-center justify-center shadow-lg shadow-red-200 active:scale-95 transition-transform text-2xl font-light -mt-6 border-4 border-white/50">+</button>
+                    <button onClick={() => { setIsCreateOpen(true); trackEvent('打开发布笔记面板'); }} className="w-12 h-12 bg-[var(--xp-app-accent)] text-white rounded-full flex items-center justify-center shadow-lg shadow-red-200 active:scale-95 transition-transform text-2xl font-light -mt-6 border-4 border-white/50">+</button>
                     <button onClick={() => { setActiveTab('me'); trackEvent('切换 Spark 主标签', { tab: 'me' }); }} className={`text-sm font-medium flex flex-col items-center justify-center gap-0.5 transition-all w-12 h-12 rounded-full ${activeTab === 'me' ? 'text-slate-900 bg-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
                         <User size={24} />
                     </button>
