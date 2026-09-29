@@ -326,10 +326,8 @@ const HandbookApp: React.FC = () => {
 
         // tracker / list 视图保留原 header 风格(现在不挤,不需要折叠)
         return (
-            <div
-                className="flex items-center justify-between px-4 pb-2 shrink-0"
-                style={{ background: 'transparent', paddingTop: 'max(3rem, var(--safe-top))' }}
-            >
+            <div className="xp-native-header shrink-0">
+                <div className="xp-native-nav-grid">
                 <button
                     onClick={handleBack}
                     className="xp-native-back active:scale-95 transition"
@@ -358,7 +356,8 @@ const HandbookApp: React.FC = () => {
                         </>
                     )}
                 </div>
-                <div className="w-9 h-9" />
+                <div className="w-[var(--xp-back-size)] h-[var(--xp-back-size)]" />
+                </div>
             </div>
         );
     };
@@ -377,7 +376,7 @@ const HandbookApp: React.FC = () => {
         return (
             <div
                 className="absolute z-30 left-0 right-0 px-3 pointer-events-none"
-                style={{ top: 'max(var(--safe-top), 12px)' }}
+                style={{ top: 'calc(var(--xp-statusbar-h) + 8px)' }}
             >
                 <div className="flex items-center justify-between gap-2 pointer-events-auto">
                     <button
