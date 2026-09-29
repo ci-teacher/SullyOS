@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  BookOpenText, CalendarBlank, Detective, DiceFive, EnvelopeSimple,
+  ArrowLeft, BookOpenText, CalendarBlank, Detective, DiceFive, EnvelopeSimple,
   FilmStrip, Heart, MusicNote,
 } from '@phosphor-icons/react';
 import type { PrivateModuleId } from './PrivateLauncher';
@@ -61,22 +61,31 @@ const MODULES: Record<PrivateModuleId, {
   },
 };
 
-const PrivateModulePlaceholder: React.FC<{ module: PrivateModuleId }> = ({ module }) => {
+const PrivateModulePlaceholder: React.FC<{ module: PrivateModuleId; onBack: () => void }> = ({ module, onBack }) => {
   const item = MODULES[module];
 
   return (
-    <div className="relative h-full w-full overflow-y-auto bg-[#FFF8EF] px-7 pb-24 pt-[max(5rem,calc(var(--safe-top,0px)+4rem))] text-[#7D3037]">
-      <div className="pointer-events-none absolute right-[-18px] top-8 h-40 w-40 rounded-full bg-[#D94B55]/10" />
-      <div className="relative mx-auto max-w-[360px]">
-        <div className="flex h-[68px] w-[68px] items-center justify-center rounded-[18px] border border-[#7D3037]/[0.08] bg-white/85 text-[#C65C65] shadow-[0_8px_20px_rgba(145,91,91,.08)]">
-          {item.icon}
+    <div className="xp-private-app-page">
+      <header className="xp-private-app-header">
+        <button type="button" className="xp-private-back" onClick={onBack} aria-label="返回桌面">
+          <ArrowLeft size={18} weight="bold" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="xp-private-eyebrow">SHARED APP</div>
+          <h1 className="xp-private-title">{item.title}</h1>
         </div>
-        <h1 className="mt-6 text-[28px] font-bold tracking-[-0.04em]">{item.title}</h1>
-        <p className="mt-2 text-[13px] font-semibold text-[#9B3C45]/70">{item.subtitle}</p>
-        <div className="mt-8 rounded-[22px] border border-[#7D3037]/[0.07] bg-white/78 p-5 text-[13px] leading-6 text-[#7D3037]/65 shadow-[0_8px_26px_rgba(145,91,91,.055)]">
-          {item.detail}
-        </div>
-      </div>
+        <div className="xp-private-header-mark">{item.icon}</div>
+      </header>
+
+      <div className="xp-private-pattern xp-private-pattern-dots" />
+
+      <main className="xp-private-app-content">
+        <p className="xp-private-subtitle">{item.subtitle}</p>
+        <section className="xp-private-card">
+          <div className="xp-private-card-kicker">UNDER CONSTRUCTION</div>
+          <p className="xp-private-body">{item.detail}</p>
+        </section>
+      </main>
     </div>
   );
 };
