@@ -115,7 +115,10 @@ CREATE TABLE IF NOT EXISTS wake_signals (
   claimed_at INTEGER,
   claim_expires_at INTEGER,
   resolution TEXT,
-  result_payload TEXT
+  result_payload TEXT,
+  doorbell_status TEXT,
+  doorbell_attempts INTEGER NOT NULL DEFAULT 0,
+  doorbell_sent_at INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
 `);
@@ -135,6 +138,9 @@ ensureColumn('wake_signals', 'claimed_at', 'INTEGER');
 ensureColumn('wake_signals', 'claim_expires_at', 'INTEGER');
 ensureColumn('wake_signals', 'resolution', 'TEXT');
 ensureColumn('wake_signals', 'result_payload', 'TEXT');
+ensureColumn('wake_signals', 'doorbell_status', 'TEXT');
+ensureColumn('wake_signals', 'doorbell_attempts', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('wake_signals', 'doorbell_sent_at', 'INTEGER');
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL");
 
 const qDiaryList = db.prepare('SELECT id, payload, updated_by, updated_at, deleted FROM diaries WHERE char_id = ? ORDER BY date DESC');
