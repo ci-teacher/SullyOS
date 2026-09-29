@@ -12,6 +12,10 @@
   --xp-line: rgba(125,48,55,.08);
   --xp-icon-size: 68px;
   --xp-icon-radius: 18px;
+  --xp-statusbar-h: max(44px, var(--safe-top, 0px));
+  --xp-navbar-h: 54px;
+  --xp-page-x: 20px;
+  --xp-back-size: 34px;
   font-family: 'Nunito', 'Noto Sans SC', sans-serif;
   background: var(--xp-cream);
   color: var(--xp-ink);
@@ -191,18 +195,24 @@
 .xiaoci-private .xp-private-app-header {
   position: relative;
   z-index: 5;
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--xp-back-size) minmax(0, 1fr) var(--xp-back-size);
   align-items: center;
-  gap: 13px;
-  min-height: 74px;
-  padding: max(18px, calc(var(--safe-top, 0px) + 10px)) 24px 10px;
+  column-gap: 12px;
+  box-sizing: border-box;
+  min-height: calc(var(--xp-statusbar-h) + var(--xp-navbar-h));
+  padding: var(--xp-statusbar-h) var(--xp-page-x) 0;
+  border-bottom: 1px solid var(--xp-app-line);
+  background: rgba(255,253,249,.86);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .xiaoci-private .xp-private-back {
   display: inline-flex;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: var(--xp-back-size);
+  height: var(--xp-back-size);
+  flex: 0 0 var(--xp-back-size);
   align-items: center;
   justify-content: center;
   border: 1px solid var(--xp-app-line);
@@ -245,12 +255,16 @@
 
 .xiaoci-private .xp-private-header-mark {
   display: flex;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: var(--xp-back-size);
+  height: var(--xp-back-size);
   align-items: center;
   justify-content: center;
   color: var(--xp-app-accent);
+}
+
+.xiaoci-private .xp-private-header-mark svg {
+  width: 22px;
+  height: 22px;
 }
 
 .xiaoci-private .xp-private-app-content {
@@ -259,7 +273,7 @@
   width: 100%;
   max-width: 390px;
   margin: 0 auto;
-  padding: 16px 24px 28px;
+  padding: 18px var(--xp-page-x) 28px;
 }
 
 .xiaoci-private .xp-private-card {
@@ -388,6 +402,8 @@
 }
 
 .xiaoci-private .xp-native-header {
+  box-sizing: border-box;
+  padding-top: var(--xp-statusbar-h) !important;
   background: rgba(255,253,249,.86) !important;
   border-bottom: 1px solid var(--xp-app-line) !important;
   color: var(--xp-app-text);
@@ -396,11 +412,31 @@
   -webkit-backdrop-filter: blur(24px);
 }
 
+.xiaoci-private .xp-native-nav {
+  display: flex;
+  min-height: var(--xp-navbar-h);
+  height: var(--xp-navbar-h);
+  align-items: center;
+  padding-left: var(--xp-page-x);
+  padding-right: var(--xp-page-x);
+}
+
+.xiaoci-private .xp-native-nav-grid {
+  display: grid;
+  grid-template-columns: var(--xp-back-size) minmax(0, 1fr) var(--xp-back-size);
+  column-gap: 12px;
+  min-height: var(--xp-navbar-h);
+  height: var(--xp-navbar-h);
+  align-items: center;
+  padding-left: var(--xp-page-x);
+  padding-right: var(--xp-page-x);
+}
+
 .xiaoci-private .xp-native-back {
   display: inline-flex;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: var(--xp-back-size);
+  height: var(--xp-back-size);
+  flex: 0 0 var(--xp-back-size);
   align-items: center;
   justify-content: center;
   border: 1px solid var(--xp-app-line);
@@ -439,4 +475,24 @@
     radial-gradient(circle at 92% 12%, rgba(217,75,85,.17) 0 34px, transparent 35px),
     radial-gradient(circle at 7% 76%, rgba(217,75,85,.10) 0 42px, transparent 43px),
     var(--xp-app-bg) !important;
+}
+
+
+/* Every inherited top chrome reserves the same iPhone status-bar zone. */
+.xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-editor-header {
+  padding-top: var(--xp-statusbar-h) !important;
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-editor-header > div {
+  min-height: var(--xp-navbar-h);
+  height: var(--xp-navbar-h);
+  padding-left: var(--xp-page-x);
+  padding-right: var(--xp-page-x);
+}
+
+/* Desktop preview deliberately keeps this blank area too; real iPhone/PWA can use a larger safe-area. */
+@media (min-width: 700px) {
+  .xiaoci-private {
+    --xp-statusbar-h: 44px;
+  }
 }
