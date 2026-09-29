@@ -4,6 +4,11 @@ import { useOS } from '../../context/OSContext';
 import { resolveSharedActor } from '../../utils/shared/identity';
 import { isSharedApiEnabled, sharedRequest } from '../../utils/shared/sharedClient';
 import { recordSharedActivity } from '../../utils/shared/activity';
+import {
+  claimWakeSignal,
+  consumeWakeSignal,
+  type SharedWakeSignal,
+} from '../../utils/shared/wake';
 
 interface TeacherHomePayload {
   now: number;
@@ -77,6 +82,8 @@ const TeacherHomeGate: React.FC = () => {
   const [visible, setVisible] = useState(() => resolveSharedActor() === 'laoshi');
   const [data, setData] = useState<TeacherHomePayload | null>(null);
   const [loading, setLoading] = useState(false);
+  const [claimedWake, setClaimedWake] = useState<SharedWakeSignal | null>(null);
+  const [resolvingWake, setResolvingWake] = useState(false);
 
   const enabled = isSharedApiEnabled();
 
@@ -93,8 +100,21 @@ const TeacherHomeGate: React.FC = () => {
 
   useEffect(() => {
     if (!visible) return;
-    void recordSharedActivity('teacher.home.open', 'teacher_home');
-    void refresh();
+    let cancelled = false;
+
+    const enterTeacherHome = async () => {
+      // Read the environment before recording Laoshi's visit so "fresh since last visit"
+      // still reflects Xiaoci's unseen activity.
+      await refresh();
+      const wake = await claimWakeSignal();
+      if (!cancelled && wake) setClaimedWake(wake);
+      await recordSharedActivity('teacher.home.open', 'teacher_home', wake?.id, {
+        wakeReason: wake?.reason,
+      });
+    };
+
+    void enterTeacherHome();
+    return () => { cancelled = true; };
   }, [visible]);
 
   const latestUserActivity = useMemo(
@@ -108,6 +128,29 @@ const TeacherHomeGate: React.FC = () => {
     void recordSharedActivity('teacher.enter_app', 'app', id);
     openApp(id);
     setVisible(false);
+  };
+
+  const resolveWake = async (resolution: 'acted' | 'no_action') => {
+    if (!claimedWake || resolvingWake) return;
+    setResolvingWake(true);
+    try {
+      const ok = await consumeWakeSignal(claimedWake.id, resolution, {
+        resolvedFrom: 'teacher-home',
+        resolvedAt: Date.now(),
+      });
+      if (ok) {
+        void recordSharedActivity(
+          resolution === 'acted' ? 'teacher.wake.acted' : 'teacher.wake.no_action',
+          'wake',
+          claimedWake.id,
+          { reason: claimedWake.reason },
+        );
+        setClaimedWake(null);
+        await refresh();
+      }
+    } finally {
+      setResolvingWake(false);
+    }
   };
 
   return (
@@ -186,9 +229,32 @@ const TeacherHomeGate: React.FC = () => {
           </div>
         </section>
 
-        {data?.pendingWake && (
+        {claimedWake && (
+          <section className="mt-4 rounded-[24px] border border-red-900/10 bg-red-50 p-4">
+            <div className="text-xs text-black/55">这次把老师叫回来的原因</div>
+            <div className="mt-1 text-sm font-semibold">{claimedWake.reason}</div>
+            <div className="mt-4 flex gap-2">
+              <button
+                disabled={resolvingWake}
+                onClick={() => void resolveWake('acted')}
+                className="rounded-full bg-[#7D3037] px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+              >
+                处理完了
+              </button>
+              <button
+                disabled={resolvingWake}
+                onClick={() => void resolveWake('no_action')}
+                className="rounded-full border border-black/10 bg-white/75 px-4 py-2 text-xs font-semibold text-black/55 disabled:opacity-40"
+              >
+                今天先不做
+              </button>
+            </div>
+          </section>
+        )}
+
+        {!claimedWake && data?.pendingWake && (
           <section className="mt-4 rounded-[24px] border border-red-900/10 bg-red-50 p-4 text-xs">
-            <span className="font-semibold">有一个待处理的 WakeSignal：</span> {data.pendingWake.reason}
+            <span className="font-semibold">有一个等待领取的 WakeSignal：</span> {data.pendingWake.reason}
           </section>
         )}
       </div>
