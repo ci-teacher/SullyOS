@@ -90,3 +90,10 @@ xiaohongshu-skills/
 /art/acid-orbit/preview.bundle.js
 /art/acid-orbit/preview.bundle.css
 /public/instant-worker.bundle.js
+
+# Xiaoci Phone private VPS deployment state
+/.env.production
+/auth-server.mjs
+/backups/
+/data/
+/shared-server/.env
