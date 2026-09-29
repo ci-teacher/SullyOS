@@ -16,6 +16,7 @@
   --xp-navbar-h: 54px;
   --xp-page-x: 20px;
   --xp-back-size: 34px;
+  --xp-shell-top: var(--xp-statusbar-h);
   font-family: 'Nunito', 'Noto Sans SC', sans-serif;
   background: var(--xp-cream);
   color: var(--xp-ink);
@@ -199,7 +200,7 @@
 
 .xiaoci-private .xp-screen-content {
   position: absolute;
-  inset: var(--xp-statusbar-h) 0 0;
+  inset: var(--xp-shell-top) 0 0;
   overflow: hidden;
 }
 
@@ -219,6 +220,14 @@
 }
 
 @media (max-width: 699px) {
+  .xiaoci-private {
+    --xp-shell-top: max(var(--safe-top, 0px), env(safe-area-inset-top, 0px));
+  }
+
+  .xiaoci-private .xp-system-statusbar {
+    display: none;
+  }
+
   .xiaoci-private.xp-desktop-stage {
     display: block;
     width: 100%;
