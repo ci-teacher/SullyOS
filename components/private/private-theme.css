@@ -155,3 +155,227 @@
     width: min(430px, calc((100dvh - 20px) * 0.461373));
   }
 }
+
+
+/* Shared visual language for every private app. */
+.xiaoci-private .xp-app-surface {
+  --xp-app-bg: #FFFDF9;
+  --xp-app-card: rgba(255,255,255,.88);
+  --xp-app-card-strong: #FFFFFF;
+  --xp-app-text: #71343B;
+  --xp-app-muted: rgba(113,52,59,.55);
+  --xp-app-faint: rgba(113,52,59,.33);
+  --xp-app-accent: #D94B55;
+  --xp-app-accent-soft: #F6C9D0;
+  --xp-app-line: rgba(113,52,59,.08);
+  --xp-app-shadow: 0 8px 24px rgba(116,67,70,.055);
+  --xp-app-radius: 20px;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--xp-app-bg);
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-private-app-page {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  background: var(--xp-app-bg);
+  color: var(--xp-app-text);
+  padding-bottom: max(28px, var(--safe-bottom, 0px));
+}
+
+.xiaoci-private .xp-private-app-header {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 74px;
+  padding: max(18px, calc(var(--safe-top, 0px) + 10px)) 24px 10px;
+}
+
+.xiaoci-private .xp-private-back {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--xp-app-line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.82);
+  color: var(--xp-app-text);
+  box-shadow: 0 4px 12px rgba(116,67,70,.035);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.xiaoci-private .xp-private-back:active {
+  transform: scale(.96);
+  background: #fff;
+}
+
+.xiaoci-private .xp-private-eyebrow,
+.xiaoci-private .xp-private-card-kicker {
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: .15em;
+  font-weight: 800;
+  color: var(--xp-app-faint);
+}
+
+.xiaoci-private .xp-private-title {
+  margin: 1px 0 0;
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -.035em;
+  font-weight: 760;
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-private-subtitle {
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--xp-app-muted);
+}
+
+.xiaoci-private .xp-private-header-mark {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  color: var(--xp-app-accent);
+}
+
+.xiaoci-private .xp-private-app-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 16px 24px 28px;
+}
+
+.xiaoci-private .xp-private-card {
+  margin-top: 18px;
+  border: 1px solid var(--xp-app-line);
+  border-radius: var(--xp-app-radius);
+  background: var(--xp-app-card);
+  box-shadow: var(--xp-app-shadow);
+  padding: 18px;
+}
+
+.xiaoci-private .xp-private-body {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--xp-app-muted);
+}
+
+.xiaoci-private .xp-private-pattern {
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.xiaoci-private .xp-private-pattern-dots {
+  top: 66px;
+  right: -22px;
+  width: 132px;
+  height: 132px;
+  opacity: .24;
+  background-image: radial-gradient(circle, var(--xp-app-accent) 0 15px, transparent 16px);
+  background-size: 42px 42px;
+}
+
+/* First-pass normalization for inherited SullyOS apps. The content stays app-specific;
+   chrome, depth and color system become the private phone's. */
+.xiaoci-private .xp-app-surface[data-xp-app="gallery"] > div,
+.xiaoci-private .xp-app-surface[data-xp-app="social"] > div,
+.xiaoci-private .xp-app-surface[data-xp-app="room"] > div,
+.xiaoci-private .xp-app-surface[data-xp-app="check_phone"] > div,
+.xiaoci-private .xp-app-surface[data-xp-app="handbook"] > div,
+.xiaoci-private .xp-app-surface[data-xp-app="special_moments"] > div,
+.xiaoci-private .xp-app-surface[data-xp-app="settings"] > div {
+  background: var(--xp-app-bg) !important;
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="gallery"] header,
+.xiaoci-private .xp-app-surface[data-xp-app="social"] header,
+.xiaoci-private .xp-app-surface[data-xp-app="room"] header,
+.xiaoci-private .xp-app-surface[data-xp-app="check_phone"] header,
+.xiaoci-private .xp-app-surface[data-xp-app="handbook"] header,
+.xiaoci-private .xp-app-surface[data-xp-app="special_moments"] header {
+  border-color: var(--xp-app-line) !important;
+  box-shadow: none !important;
+}
+
+.xiaoci-private .xp-app-surface button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Keep the exchange diary expressive, but remove the black-device feeling in private mode. */
+.xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-root {
+  background: var(--xp-app-bg) !important;
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-editor-header {
+  background: rgba(255,253,249,.88) !important;
+  color: var(--xp-app-text) !important;
+  border-bottom: 1px solid var(--xp-app-line);
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-editor-header button {
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-bottom-controls {
+  background: rgba(255,253,249,.92) !important;
+  border-color: var(--xp-app-line) !important;
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-paper-picker {
+  background: rgba(255,255,255,.8) !important;
+  border-color: var(--xp-app-line) !important;
+}
+
+/* Reusable private cards/lists inside old apps can opt in gradually. */
+.xiaoci-private .xp-card {
+  border: 1px solid var(--xp-app-line);
+  border-radius: var(--xp-app-radius);
+  background: var(--xp-app-card);
+  box-shadow: var(--xp-app-shadow);
+}
+
+.xiaoci-private .xp-list-row {
+  min-height: 52px;
+  border-bottom: 1px solid var(--xp-app-line);
+  color: var(--xp-app-text);
+}
+
+.xiaoci-private .xp-list-row:last-child {
+  border-bottom: 0;
+}
+
+.xiaoci-private .xp-primary-button {
+  border-radius: 14px;
+  background: var(--xp-app-accent);
+  color: white;
+  box-shadow: 0 5px 15px rgba(217,75,85,.14);
+}
+
+.xiaoci-private .xp-secondary-button {
+  border: 1px solid var(--xp-app-line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.85);
+  color: var(--xp-app-text);
+}
