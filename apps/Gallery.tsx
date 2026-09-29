@@ -455,17 +455,17 @@ CRITICAL: Stay in character. If there's conversation context, your comment shoul
     );
 
     return (
-        <div className="h-full w-full bg-slate-50 flex flex-col font-light relative">
+        <div className="xp-native-page h-full w-full flex flex-col font-light relative">
             <ConfirmDialog isOpen={!!confirmDialog} title={confirmDialog?.title || ''} message={confirmDialog?.message || ''} variant={confirmDialog?.variant} confirmText="确认" onConfirm={confirmDialog?.onConfirm || (() => setConfirmDialog(null))} onCancel={() => setConfirmDialog(null)} />
 
             {/* Header */}
             {view !== 'detail' && (
-                <div className="bg-white/80 backdrop-blur-xl border-b border-slate-100/60 shrink-0 z-10 sticky top-0" style={{ paddingTop: 'var(--safe-top)' }}>
+                <div className="xp-native-header shrink-0 z-10 sticky top-0" style={{ paddingTop: 'var(--safe-top)' }}>
                     <div className="h-16 flex items-center px-4">
-                        <button onClick={handleBack} className="p-2 -ml-2 rounded-full hover:bg-black/5 active:scale-90 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-600"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+                        <button onClick={handleBack} className="xp-native-back -ml-1 active:scale-95 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-[var(--xp-app-text)]"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
                         </button>
-                        <h1 className="text-lg font-semibold text-slate-800 ml-2 tracking-tight">
+                        <h1 className="text-[19px] font-bold text-[var(--xp-app-text)] ml-2 tracking-[-0.025em]">
                             {view === 'albums' ? '相册' : characters.find(c => c.id === activeCharId)?.name || '相册'}
                         </h1>
                         {view === 'grid' && <span className="text-xs text-slate-400 ml-2 font-mono">{images.length}</span>}
