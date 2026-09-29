@@ -233,7 +233,7 @@ const renderInlineStyle = (text: string) => {
         }
         // Strikethrough
         if (part.startsWith('~~') && part.endsWith('~~')) {
-            return <span key={i} className="line-through text-slate-400 opacity-80">{part.slice(2, -2)}</span>;
+            return <span key={i} className="line-through text-[var(--xp-app-faint)] opacity-80">{part.slice(2, -2)}</span>;
         }
         // Italic (single asterisk)
         if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
@@ -285,10 +285,10 @@ const renderNotebookContent = (text: string) => {
                         return <h4 key={key} className="text-sm font-bold text-slate-700 mt-3 mb-1 border-l-4 border-slate-300 pl-2 break-words">{trimLine.substring(3)}</h4>;
                     }
                     if (trimLine.startsWith('> ')) {
-                        return <div key={key} className="pl-3 border-l-4 border-slate-300 text-slate-500 italic my-2 py-1 bg-slate-100 rounded-r-lg text-xs break-words">{trimLine.substring(2)}</div>;
+                        return <div key={key} className="pl-3 border-l-4 border-slate-300 text-[var(--xp-app-muted)] italic my-2 py-1 bg-slate-100 rounded-r-lg text-xs break-words">{trimLine.substring(2)}</div>;
                     }
                     if (trimLine.startsWith('- ') || trimLine.startsWith('• ')) {
-                        return <div key={key} className="flex gap-2 my-1 pl-1 items-start"><span className="text-slate-400 mt-1 shrink-0">•</span><span className="flex-1 break-words">{renderInlineStyle(trimLine.substring(2))}</span></div>;
+                        return <div key={key} className="flex gap-2 my-1 pl-1 items-start"><span className="text-[var(--xp-app-faint)] mt-1 shrink-0">•</span><span className="flex-1 break-words">{renderInlineStyle(trimLine.substring(2))}</span></div>;
                     }
                     
                     if (trimLine.match(/^\[[ x]\]/)) {
@@ -298,7 +298,7 @@ const renderNotebookContent = (text: string) => {
                                  <div className={`w-3 h-3 border rounded-sm flex items-center justify-center shrink-0 ${isChecked ? 'bg-slate-600 border-slate-600' : 'border-slate-400'}`}>
                                      {isChecked && <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>}
                                  </div>
-                                 <span className={`flex-1 break-words ${isChecked ? 'line-through text-slate-400' : 'text-slate-700'}`}>{renderInlineStyle(trimLine.substring(3))}</span>
+                                 <span className={`flex-1 break-words ${isChecked ? 'line-through text-[var(--xp-app-faint)]' : 'text-slate-700'}`}>{renderInlineStyle(trimLine.substring(3))}</span>
                              </div>
                          );
                     }
@@ -1888,22 +1888,22 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                 </div>
             </div>
             <div className="p-2">
-                <p className="text-[10px] text-slate-500 leading-snug">{template.description}</p>
+                <p className="text-[10px] text-[var(--xp-app-muted)] leading-snug">{template.description}</p>
             </div>
         </button>
     );
 
     return (
-        <div className="h-full w-full bg-[#f8fafc] flex flex-col relative overflow-hidden font-sans select-none">
+        <div className="xp-native-page h-full w-full flex flex-col relative overflow-hidden font-sans select-none">
 
             {/* 「更新这一天」时一趟把整个房间生成出来（按次计费，所以一趟读完，之后逛屋不再等待）。
                 慢是必然的，这里用小字向用户解释清楚为什么。进门本身不再触发它。 */}
             {isInitializing && (
-                <div className="absolute inset-0 z-[500] bg-white flex flex-col items-center justify-center animate-fade-in px-10 text-center">
-                    <div className="text-4xl mb-4 animate-bounce"><Door size={48} className="text-slate-400" /></div>
-                    <p className="text-sm font-bold text-slate-500">{initStatusText}</p>
-                    <p className="text-[11px] text-slate-400/90 leading-[1.7] mt-3 max-w-[268px]">
-                        正在一趟把整个房间「读」出来——ta 此刻的状态、屋里<b className="text-slate-500">每一件物品</b>的样子和 ta 的反应、今天的计划与随笔，都在这一次里生成。
+                <div className="absolute inset-0 z-[500] bg-[var(--xp-app-bg)] flex flex-col items-center justify-center animate-fade-in px-10 text-center">
+                    <div className="text-4xl mb-4 animate-bounce"><Door size={48} className="text-[var(--xp-app-faint)]" /></div>
+                    <p className="text-sm font-bold text-[var(--xp-app-muted)]">{initStatusText}</p>
+                    <p className="text-[11px] text-[var(--xp-app-faint)]/90 leading-[1.7] mt-3 max-w-[268px]">
+                        正在一趟把整个房间「读」出来——ta 此刻的状态、屋里<b className="text-[var(--xp-app-muted)]">每一件物品</b>的样子和 ta 的反应、今天的计划与随笔，都在这一次里生成。
                         <br />物件越多越久，但只生成这一次，生成后就能一口气全看完，之后点哪件都不再等待。
                     </p>
                 </div>
@@ -1914,7 +1914,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                 title="Sully 的样板房推销"
                 onClose={dismissSampleRoomOffer}
                 footer={
-                    <button onClick={dismissSampleRoomOffer} className="w-full py-3 bg-slate-100 text-slate-500 font-bold rounded-2xl text-xs">
+                    <button onClick={dismissSampleRoomOffer} className="w-full py-3 bg-slate-100 text-[var(--xp-app-muted)] font-bold rounded-2xl text-xs">
                         谢谢，我不需要
                     </button>
                 }
@@ -1922,7 +1922,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                 <div className="space-y-4">
                     <div className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
                         <p className="text-sm font-bold text-slate-700">这里看起来空空的，Sully 来给你推销两款样板房：</p>
-                        <p className="text-[10px] text-slate-400 leading-relaxed mt-1">样板房收纳在「家具超市 · 样板房」里，可以再次选择并二次调整。</p>
+                        <p className="text-[10px] text-[var(--xp-app-faint)] leading-relaxed mt-1">样板房收纳在「家具超市 · 样板房」里，可以再次选择并二次调整。</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         {BUILTIN_ROOM_TEMPLATES.map(template => renderTemplateButton(template, chooseSampleRoom, sampleRoomLoadingId === template.id ? '导入中...' : '点我套用'))}
@@ -1942,7 +1942,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                     >
                         <Image size={26} className="text-blue-500 mb-3" />
                         <p className="text-sm font-bold text-slate-700">上传自定义图片</p>
-                        <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">从设备选择一张新的小屋立绘。</p>
+                        <p className="text-[10px] text-[var(--xp-app-faint)] mt-1 leading-relaxed">从设备选择一张新的小屋立绘。</p>
                     </button>
                     <button
                         onClick={openActorStudio}
@@ -1950,7 +1950,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                     >
                         <Sparkle size={26} className="text-purple-500 mb-3" />
                         <p className="text-sm font-bold text-slate-700">进入捏人</p>
-                        <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">前往神经链接里的手办展示。</p>
+                        <p className="text-[10px] text-[var(--xp-app-faint)] mt-1 leading-relaxed">前往神经链接里的手办展示。</p>
                     </button>
                 </div>
             </Modal>
@@ -1997,7 +1997,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                     <img src={actorImage} className={`w-full h-full object-contain ${actorState.action === 'walk' ? 'animate-bounce' : ''}`} alt="" />
                     {mode === 'edit' && <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black/60 text-white text-[9px] px-2 py-1 rounded backdrop-blur-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"><Camera size={12} /> 换装</div>}
                     {/* Fixed: Wider bubble width */}
-                    {aiBubble.visible && <div className="absolute bottom-[105%] left-1/2 -translate-x-1/2 bg-white px-4 py-3 rounded-[20px] rounded-bl-none shadow-lg border-2 border-black/5 min-w-[120px] max-w-[300px] animate-pop-in z-50"><p className="text-xs font-bold text-slate-700 leading-tight text-center break-words">{aiBubble.text}</p><button onClick={(e) => { e.stopPropagation(); setAiBubble({ ...aiBubble, visible: false }); }} className="absolute -top-2 -right-2 bg-slate-200 text-slate-500 rounded-full w-4 h-4 flex items-center justify-center text-[8px]">×</button></div>}
+                    {aiBubble.visible && <div className="absolute bottom-[105%] left-1/2 -translate-x-1/2 bg-white px-4 py-3 rounded-[20px] rounded-bl-none shadow-lg border-2 border-black/5 min-w-[120px] max-w-[300px] animate-pop-in z-50"><p className="text-xs font-bold text-slate-700 leading-tight text-center break-words">{aiBubble.text}</p><button onClick={(e) => { e.stopPropagation(); setAiBubble({ ...aiBubble, visible: false }); }} className="absolute -top-2 -right-2 bg-slate-200 text-[var(--xp-app-muted)] rounded-full w-4 h-4 flex items-center justify-center text-[8px]">×</button></div>}
                 </div>}
             </div>
 
@@ -2016,25 +2016,25 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
 
             {/* Sidebar Toggle Button */}
             <button onClick={() => setShowSidebar(true)} className={`absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-l-2xl shadow-lg border border-r-0 border-slate-200 transition-transform duration-300 z-[300] ${showSidebar ? 'translate-x-full' : 'translate-x-0'}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-slate-500"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[var(--xp-app-muted)]"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
             </button>
             {showSidebar && <div className="absolute inset-0 z-[290] bg-black/20" onClick={() => setShowSidebar(false)}></div>}
             <div className={`absolute right-0 top-0 bottom-0 w-3/4 max-w-sm bg-white shadow-2xl z-[300] transition-transform duration-300 ease-out flex flex-col ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="p-6 pb-2 border-b border-slate-100 flex justify-between items-center bg-slate-50" style={{ paddingTop: 'max(1.5rem, var(--safe-top, 0px))' }}>
                     <h3 className="text-lg font-bold text-slate-700 tracking-tight">生活碎片</h3>
-                    <button onClick={() => setShowSidebar(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+                    <button onClick={() => setShowSidebar(false)} className="p-2 -mr-2 text-[var(--xp-app-faint)] hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
                 </div>
                 <div className="flex p-2 bg-slate-50 border-b border-slate-100">
-                    <button onClick={() => { setActivePanel('todo'); trackEvent('切换生活碎片面板', { panel: 'todo' }); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${activePanel === 'todo' ? 'bg-white shadow text-primary' : 'text-slate-400 hover:bg-white/50'}`}>今日计划</button>
-                    <button onClick={() => { setActivePanel('schedule'); trackEvent('切换生活碎片面板', { panel: 'schedule' }); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${activePanel === 'schedule' ? 'bg-white shadow text-primary' : 'text-slate-400 hover:bg-white/50'}`}>日程</button>
-                    <button onClick={() => { setActivePanel('notebook'); trackEvent('切换生活碎片面板', { panel: 'notebook' }); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${activePanel === 'notebook' ? 'bg-white shadow text-primary' : 'text-slate-400 hover:bg-white/50'}`}>私密记事</button>
+                    <button onClick={() => { setActivePanel('todo'); trackEvent('切换生活碎片面板', { panel: 'todo' }); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${activePanel === 'todo' ? 'bg-white shadow text-primary' : 'text-[var(--xp-app-faint)] hover:bg-white/50'}`}>今日计划</button>
+                    <button onClick={() => { setActivePanel('schedule'); trackEvent('切换生活碎片面板', { panel: 'schedule' }); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${activePanel === 'schedule' ? 'bg-white shadow text-primary' : 'text-[var(--xp-app-faint)] hover:bg-white/50'}`}>日程</button>
+                    <button onClick={() => { setActivePanel('notebook'); trackEvent('切换生活碎片面板', { panel: 'notebook' }); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${activePanel === 'notebook' ? 'bg-white shadow text-primary' : 'text-[var(--xp-app-faint)] hover:bg-white/50'}`}>私密记事</button>
                 </div>
                 
                 {/* Fixed: Add no-scrollbar class to hide scrollbar */}
                 <div className="flex-1 overflow-y-auto p-6 bg-[#fcfcfc] no-scrollbar" style={{ paddingBottom: 'calc(1.5rem + var(--safe-bottom, 0px))' }}>
                     {activePanel === 'todo' && (
                         <div className="space-y-6">
-                            <div className="flex items-center justify-between"><span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{todaysTodo?.date || 'Today'}</span><span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500">完成度: {todaysTodo ? Math.round((todaysTodo.items.filter(i=>i.done).length / todaysTodo.items.length)*100) : 0}%</span></div>
+                            <div className="flex items-center justify-between"><span className="text-xs font-bold text-[var(--xp-app-faint)] uppercase tracking-widest">{todaysTodo?.date || 'Today'}</span><span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-[var(--xp-app-muted)]">完成度: {todaysTodo ? Math.round((todaysTodo.items.filter(i=>i.done).length / todaysTodo.items.length)*100) : 0}%</span></div>
                             {todaysTodo ? <ul className="space-y-3">{todaysTodo.items.map((item, idx) => (
                                 <li key={idx} className="flex items-start gap-3 group">
                                     <div onClick={() => handleToggleTodo(idx)} className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${item.done ? 'bg-green-400 border-green-400' : 'border-slate-300 group-hover:border-primary'}`}>
@@ -2043,7 +2043,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                                     <span onClick={() => handleToggleTodo(idx)} className={`text-sm leading-relaxed transition-all flex-1 cursor-pointer ${item.done ? 'text-slate-300 line-through decoration-slate-300' : 'text-slate-700 font-medium'}`}>{item.text}</span>
                                     <button onClick={() => handleDeleteTodo(idx)} className="text-slate-300 hover:text-red-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                                 </li>
-                            ))}</ul> : <div className="text-center py-10 text-slate-400 text-xs">生成中...</div>}
+                            ))}</ul> : <div className="text-center py-10 text-[var(--xp-app-faint)] text-xs">生成中...</div>}
                             <div className="mt-8 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-xs text-yellow-800 leading-relaxed italic relative"><span className="absolute -top-3 left-4"><img src={twemojiUrl('1f4cc')} alt="pin" className="w-6 h-6" /></span>这是 {char?.name} 今天的自动行程表。虽然你不能帮TA做，但可以监督TA哦。</div>
                         </div>
                     )}
@@ -2055,7 +2055,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                                 compact={true}
                             />
                             {!roomSchedule && (
-                                <p className="text-center text-xs text-slate-400 py-4">日程将在首次聊天时自动生成</p>
+                                <p className="text-center text-xs text-[var(--xp-app-faint)] py-4">日程将在首次聊天时自动生成</p>
                             )}
                         </div>
                     )}
@@ -2069,7 +2069,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                                     {/* Spiral Binding Visual - Adaptive Height */}
                                     <div className="absolute left-4 top-4 bottom-4 w-px border-l-2 border-dotted border-slate-300 pointer-events-none"></div>
 
-                                    <div className="mb-4 ml-6 flex justify-between items-center text-[10px] text-slate-400 font-mono border-b border-slate-100 pb-2">
+                                    <div className="mb-4 ml-6 flex justify-between items-center text-[10px] text-[var(--xp-app-faint)] font-mono border-b border-slate-100 pb-2">
                                         <span>#{notebookEntries.length - notebookPage}</span>
                                         <div className="flex gap-2 items-center">
                                             <span>{new Date(notebookEntries[notebookPage].timestamp).toLocaleString()}</span>
@@ -2077,9 +2077,9 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                                         </div>
                                     </div>
                                     <div className="flex-1 ml-6 text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">{renderNotebookContent(notebookEntries[notebookPage].content)}</div>
-                                    <div className="mt-6 ml-6 flex justify-between items-center pt-4 border-t border-slate-100"><button disabled={notebookPage >= notebookEntries.length - 1} onClick={() => setNotebookPage(p => p + 1)} className="text-slate-400 hover:text-primary disabled:opacity-30">← 旧的</button><span className="text-[10px] text-slate-300">{notebookPage + 1} / {notebookEntries.length}</span><button disabled={notebookPage <= 0} onClick={() => setNotebookPage(p => p - 1)} className="text-slate-400 hover:text-primary disabled:opacity-30">新的 →</button></div>
+                                    <div className="mt-6 ml-6 flex justify-between items-center pt-4 border-t border-slate-100"><button disabled={notebookPage >= notebookEntries.length - 1} onClick={() => setNotebookPage(p => p + 1)} className="text-[var(--xp-app-faint)] hover:text-primary disabled:opacity-30">← 旧的</button><span className="text-[10px] text-slate-300">{notebookPage + 1} / {notebookEntries.length}</span><button disabled={notebookPage <= 0} onClick={() => setNotebookPage(p => p - 1)} className="text-[var(--xp-app-faint)] hover:text-primary disabled:opacity-30">新的 →</button></div>
                                 </div>
-                            ) : <div className="text-center py-10 text-slate-400 text-xs">记事本是空的...</div>}
+                            ) : <div className="text-center py-10 text-[var(--xp-app-faint)] text-xs">记事本是空的...</div>}
                         </div>
                     )}
                 </div>
@@ -2092,20 +2092,20 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                     {/* 装修模式：撤销 / 重做 */}
                     {mode === 'edit' && (
                         <>
-                            <button onClick={() => setHideActorInEdit(v => !v)} className={`p-2 rounded-full shadow-md active:scale-90 transition-all ${hideActorInEdit ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-500'}`} title={hideActorInEdit ? '显示角色' : '隐藏角色'} aria-label={hideActorInEdit ? '显示角色' : '隐藏角色'}>
+                            <button onClick={() => setHideActorInEdit(v => !v)} className={`p-2 rounded-full shadow-md active:scale-90 transition-all ${hideActorInEdit ? 'bg-blue-500 text-white' : 'bg-white/90 text-[var(--xp-app-muted)]'}`} title={hideActorInEdit ? '显示角色' : '隐藏角色'} aria-label={hideActorInEdit ? '显示角色' : '隐藏角色'}>
                                 {hideActorInEdit ? <EyeSlash size={22} weight="bold" /> : <Eye size={22} weight="bold" />}
                             </button>
-                            <button onClick={undo} disabled={!history.length} className="p-2 bg-white/90 rounded-full shadow-md text-slate-500 disabled:opacity-40 active:scale-90 transition-transform" title="撤销">
+                            <button onClick={undo} disabled={!history.length} className="p-2 bg-white/90 rounded-full shadow-md text-[var(--xp-app-muted)] disabled:opacity-40 active:scale-90 transition-transform" title="撤销">
                                 <ArrowUUpLeft size={22} weight="bold" />
                             </button>
-                            <button onClick={redo} disabled={!future.length} className="p-2 bg-white/90 rounded-full shadow-md text-slate-500 disabled:opacity-40 active:scale-90 transition-transform" title="重做">
+                            <button onClick={redo} disabled={!future.length} className="p-2 bg-white/90 rounded-full shadow-md text-[var(--xp-app-muted)] disabled:opacity-40 active:scale-90 transition-transform" title="重做">
                                 <ArrowUUpRight size={22} weight="bold" />
                             </button>
                         </>
                     )}
                     {/* REFRESH BUTTON — 仅在今天已生成时露出（未生成时走下方「更新这一天」横幅） */}
                     {mode === 'view' && todayGenerated && (
-                        <button onClick={() => setShowRefreshConfirm(true)} className="p-2 bg-white/90 rounded-full shadow-md text-slate-500 hover:text-primary active:scale-90 transition-transform" title="强制刷新今日">
+                        <button onClick={() => setShowRefreshConfirm(true)} className="p-2 bg-white/90 rounded-full shadow-md text-[var(--xp-app-muted)] hover:text-primary active:scale-90 transition-transform" title="强制刷新今日">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                         </button>
                     )}
@@ -2114,7 +2114,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
             </div>
 
             {/* Observation Card (Bottom) */}
-            {observationText && mode === 'view' && <div className="absolute left-4 right-4 bg-white p-5 rounded-2xl shadow-2xl border border-slate-100 z-[150] animate-slide-up" style={{ bottom: 'calc(1.5rem + var(--safe-bottom, 0px))' }}><div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-blue-500 uppercase tracking-widest">OBSERVATION</span><button onClick={() => setObservationText('')} className="text-slate-400 hover:text-slate-600">×</button></div><p className="text-sm text-slate-700 leading-relaxed font-medium text-justify">{observationText}</p></div>}
+            {observationText && mode === 'view' && <div className="absolute left-4 right-4 bg-white p-5 rounded-2xl shadow-2xl border border-slate-100 z-[150] animate-slide-up" style={{ bottom: 'calc(1.5rem + var(--safe-bottom, 0px))' }}><div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-blue-500 uppercase tracking-widest">OBSERVATION</span><button onClick={() => setObservationText('')} className="text-[var(--xp-app-faint)] hover:text-slate-600">×</button></div><p className="text-sm text-slate-700 leading-relaxed font-medium text-justify">{observationText}</p></div>}
 
             {/* 「更新这一天」横幅 —— 今天尚未生成时露出（进门不再阻塞，由用户主动触发） */}
             {mode === 'view' && !todayGenerated && !isInitializing && !observationText && (
@@ -2124,7 +2124,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-slate-700 leading-tight">今天还没走进 {char?.name} 的一天</p>
-                        <p className="text-[11px] text-slate-400 leading-snug mt-0.5">物品反应、今日计划与随笔会在这一次里生成，需要一点时间。</p>
+                        <p className="text-[11px] text-[var(--xp-app-faint)] leading-snug mt-0.5">物品反应、今日计划与随笔会在这一次里生成，需要一点时间。</p>
                     </div>
                     <button onClick={handleGenerateToday} className="shrink-0 px-4 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-md active:scale-95 transition-transform">
                         更新这一天
@@ -2157,11 +2157,11 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                             const sel = items.find(i => i.id === selectedItemId);
                             if (!sel) return null;
                             const isRug = sel.type === 'rug';
-                            const nudgeBtn = "w-9 h-9 bg-slate-100 rounded-lg text-slate-500 font-bold text-sm active:bg-blue-100 active:text-blue-500 active:scale-95 transition-all";
+                            const nudgeBtn = "w-9 h-9 bg-slate-100 rounded-lg text-[var(--xp-app-muted)] font-bold text-sm active:bg-blue-100 active:text-blue-500 active:scale-95 transition-all";
                             return (
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-between items-center gap-2">
-                                    <span className="text-xs font-bold text-slate-500 truncate">调整 · {sel.name}</span>
+                                    <span className="text-xs font-bold text-[var(--xp-app-muted)] truncate">调整 · {sel.name}</span>
                                     <div className="flex gap-2 shrink-0">
                                         <button onClick={duplicateSelectedItem} className="text-xs text-blue-500 font-bold bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1"><CopySimple size={13} weight="bold" /> 复制</button>
                                         <button onClick={deleteSelectedItem} className="text-xs text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full">删除</button>
@@ -2170,11 +2170,11 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                                 <div className="flex gap-4 items-stretch">
                                     <div className="flex-1 flex flex-col justify-center gap-3 min-w-0">
                                         <div>
-                                            <label className="text-[10px] text-slate-400 block mb-1">缩放 <span className="text-slate-600 font-bold">{Math.round(sel.scale * 100)}%</span></label>
+                                            <label className="text-[10px] text-[var(--xp-app-faint)] block mb-1">缩放 <span className="text-slate-600 font-bold">{Math.round(sel.scale * 100)}%</span></label>
                                             <input type="range" min="0.2" max="6" step="0.05" value={sel.scale} onChange={(e) => updateSelectedItem({ scale: parseFloat(e.target.value) }, 'cont:scale')} className="w-full h-1 bg-slate-200 rounded-full accent-blue-500" />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] text-slate-400 block mb-1">
+                                            <label className="text-[10px] text-[var(--xp-app-faint)] block mb-1">
                                                 旋转 <span className="text-slate-600 font-bold">{Math.round(sel.rotation)}°</span>
                                                 {sel.rotation !== 0 && <button onClick={() => updateSelectedItem({ rotation: 0 }, 'op')} className="ml-2 text-[9px] text-blue-500 font-bold bg-blue-50 px-1.5 py-0.5 rounded-full">归零</button>}
                                             </label>
@@ -2196,15 +2196,15 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                                 </div>
                                 {/* 类型切换：把已摆好的物品就地改成地毯（沉到底层）或改回家具 */}
                                 <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                                    <span className="text-[10px] text-slate-400">图层类型{isRug ? '：地毯（垫底，角色踩在上面）' : ''}</span>
-                                    <button onClick={() => updateSelectedItem({ type: isRug ? 'furniture' : 'rug' }, 'op')} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${isRug ? 'bg-purple-100 text-purple-600' : 'bg-slate-200 text-slate-500'}`}>
+                                    <span className="text-[10px] text-[var(--xp-app-faint)]">图层类型{isRug ? '：地毯（垫底，角色踩在上面）' : ''}</span>
+                                    <button onClick={() => updateSelectedItem({ type: isRug ? 'furniture' : 'rug' }, 'op')} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${isRug ? 'bg-purple-100 text-purple-600' : 'bg-slate-200 text-[var(--xp-app-muted)]'}`}>
                                         {isRug ? '改回普通家具' : '设为地毯'}
                                     </button>
                                 </div>
                                 {/* 可互动开关：关掉后角色不再为它生成描写/反应 */}
                                 <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                                    <span className="text-[10px] text-slate-400">可互动（角色会为它生成描写与反应）</span>
-                                    <button onClick={() => updateSelectedItem({ isInteractive: !sel.isInteractive }, 'op')} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${sel.isInteractive ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-500'}`}>
+                                    <span className="text-[10px] text-[var(--xp-app-faint)]">可互动（角色会为它生成描写与反应）</span>
+                                    <button onClick={() => updateSelectedItem({ isInteractive: !sel.isInteractive }, 'op')} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${sel.isInteractive ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-[var(--xp-app-muted)]'}`}>
                                         {sel.isInteractive ? '开' : '关'}
                                     </button>
                                 </div>
@@ -2214,28 +2214,28 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                         })() : (
                             <div className="space-y-4">
                                 <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                                    <button onClick={() => { setShowLibrary(true); trackEvent('打开家具超市'); }} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-md text-xl">+</div><span className="text-[10px] font-bold text-slate-500">家具库</span></button>
-                                    <button onClick={() => setShowCustomModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white shadow-md"><Sparkle size={24} /></div><span className="text-[10px] font-bold text-slate-500">自定义</span></button>
-                                    <button onClick={() => setShowActorArtModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center text-white shadow-md"><Camera size={24} /></div><span className="text-[10px] font-bold text-slate-500">角色立绘</span></button>
+                                    <button onClick={() => { setShowLibrary(true); trackEvent('打开家具超市'); }} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-md text-xl">+</div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">家具库</span></button>
+                                    <button onClick={() => setShowCustomModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white shadow-md"><Sparkle size={24} /></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">自定义</span></button>
+                                    <button onClick={() => setShowActorArtModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center text-white shadow-md"><Camera size={24} /></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">角色立绘</span></button>
                                     {/* 批量导入：一次选多张图，全部入库为自定义素材 */}
-                                    <button onClick={() => batchAssetInputRef.current?.click()} disabled={isBatchImporting} className="flex flex-col items-center gap-1 shrink-0 disabled:opacity-50"><div className="w-12 h-12 bg-fuchsia-500 rounded-xl flex items-center justify-center text-white shadow-md"><Images size={24} /></div><span className="text-[10px] font-bold text-slate-500">{isBatchImporting ? '导入中…' : '批量导入'}</span></button>
-                                    <button onClick={() => wallInputRef.current?.click()} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-slate-500 shadow-sm border border-slate-300"><Image size={24} /></div><span className="text-[10px] font-bold text-slate-500">换墙纸</span></button>
-                                    <button onClick={() => floorInputRef.current?.click()} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center shadow-sm border border-slate-300"><img src={twemojiUrl('1f9f1')} alt="brick" className="w-6 h-6" /></div><span className="text-[10px] font-bold text-slate-500">换地板</span></button>
+                                    <button onClick={() => batchAssetInputRef.current?.click()} disabled={isBatchImporting} className="flex flex-col items-center gap-1 shrink-0 disabled:opacity-50"><div className="w-12 h-12 bg-fuchsia-500 rounded-xl flex items-center justify-center text-white shadow-md"><Images size={24} /></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">{isBatchImporting ? '导入中…' : '批量导入'}</span></button>
+                                    <button onClick={() => wallInputRef.current?.click()} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-[var(--xp-app-muted)] shadow-sm border border-slate-300"><Image size={24} /></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">换墙纸</span></button>
+                                    <button onClick={() => floorInputRef.current?.click()} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center shadow-sm border border-slate-300"><img src={twemojiUrl('1f9f1')} alt="brick" className="w-6 h-6" /></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">换地板</span></button>
                                     {/* Export Room Template Button */}
-                                    <button onClick={() => { setExportName(prev => prev || `${char?.name || ''}的小屋`); setShowExportModal(true); }} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 7.5 12 3m0 0 4.5 4.5M12 3v13.5" /></svg></div><span className="text-[10px] font-bold text-slate-500">导出小屋</span></button>
+                                    <button onClick={() => { setExportName(prev => prev || `${char?.name || ''}的小屋`); setShowExportModal(true); }} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 7.5 12 3m0 0 4.5 4.5M12 3v13.5" /></svg></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">导出小屋</span></button>
                                     {/* Import Room Template Button（导出的另一半：读 .room.json 样板房） */}
-                                    <button onClick={() => importRoomInputRef.current?.click()} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-sky-500 rounded-xl flex items-center justify-center text-white shadow-md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg></div><span className="text-[10px] font-bold text-slate-500">导入小屋</span></button>
+                                    <button onClick={() => importRoomInputRef.current?.click()} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-sky-500 rounded-xl flex items-center justify-center text-white shadow-md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">导入小屋</span></button>
                                     {/* Settings Button */}
-                                    <button onClick={() => setShowSettingsModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 shadow-sm border border-slate-300"><GearSix size={24} /></div><span className="text-[10px] font-bold text-slate-500">设置</span></button>
+                                    <button onClick={() => setShowSettingsModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 shadow-sm border border-slate-300"><GearSix size={24} /></div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">设置</span></button>
                                     {/* Developer Export Button */}
-                                    <button onClick={() => setShowDevModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-sm border border-slate-600">{'{}'}</div><span className="text-[10px] font-bold text-slate-500">Dev</span></button>
+                                    <button onClick={() => setShowDevModal(true)} className="flex flex-col items-center gap-1 shrink-0"><div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-sm border border-slate-600">{'{}'}</div><span className="text-[10px] font-bold text-[var(--xp-app-muted)]">Dev</span></button>
                                     
                                     <input type="file" ref={wallInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'wall')} />
                                     <input type="file" ref={floorInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'floor')} />
                                     <input type="file" ref={actorInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'actor')} />
                                 </div>
-                                <div><h4 className="text-[10px] font-bold text-slate-400 mb-2 uppercase">墙面预设</h4><div className="flex gap-2 overflow-x-auto no-scrollbar">{WALLPAPER_PRESETS.map((wp, i) => <button key={i} onClick={() => handleWallChange(wp.value)} className="w-10 h-10 rounded-lg shadow-sm border border-slate-200 shrink-0" style={{ background: wp.value }}></button>)}</div></div>
-                                <div><h4 className="text-[10px] font-bold text-slate-400 mb-2 uppercase">地板预设</h4><div className="flex gap-2 overflow-x-auto no-scrollbar">{FLOOR_PRESETS.map((fp, i) => <button key={i} onClick={() => handleFloorChange(fp.value)} className="w-10 h-10 rounded-lg shadow-sm border border-slate-200 shrink-0" style={{ background: fp.value }}></button>)}</div></div>
+                                <div><h4 className="text-[10px] font-bold text-[var(--xp-app-faint)] mb-2 uppercase">墙面预设</h4><div className="flex gap-2 overflow-x-auto no-scrollbar">{WALLPAPER_PRESETS.map((wp, i) => <button key={i} onClick={() => handleWallChange(wp.value)} className="w-10 h-10 rounded-lg shadow-sm border border-slate-200 shrink-0" style={{ background: wp.value }}></button>)}</div></div>
+                                <div><h4 className="text-[10px] font-bold text-[var(--xp-app-faint)] mb-2 uppercase">地板预设</h4><div className="flex gap-2 overflow-x-auto no-scrollbar">{FLOOR_PRESETS.map((fp, i) => <button key={i} onClick={() => handleFloorChange(fp.value)} className="w-10 h-10 rounded-lg shadow-sm border border-slate-200 shrink-0" style={{ background: fp.value }}></button>)}</div></div>
                             </div>
                         )}
                     </div>
@@ -2256,19 +2256,19 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                         <button onClick={() => batchAssetInputRef.current?.click()} disabled={isBatchImporting} className="shrink-0 px-3 py-2 bg-purple-500 text-white text-[10px] font-bold rounded-xl disabled:opacity-50 active:scale-95 transition-transform">{isBatchImporting ? '导入中…' : '＋批量导入'}</button>
                     </div>
                     <div className="mb-6">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 sticky top-0 bg-white py-2 z-10 flex justify-between">
+                        <h4 className="text-xs font-bold text-[var(--xp-app-faint)] uppercase tracking-widest mb-3 sticky top-0 bg-white py-2 z-10 flex justify-between">
                             样板房
                             <span className="text-[9px] bg-slate-100 px-2 rounded-full">{BUILTIN_ROOM_TEMPLATES.length}</span>
                         </h4>
                         <div className="grid grid-cols-2 gap-3">
                             {BUILTIN_ROOM_TEMPLATES.map(template => renderTemplateButton(template, openBuiltInRoomTemplate, sampleRoomLoadingId === template.id ? '读取中...' : '打开导入'))}
                         </div>
-                        <p className="text-[9px] text-slate-400 leading-relaxed mt-2">打开后可选择替换当前小屋，或只把样板房物品合并进来。</p>
+                        <p className="text-[9px] text-[var(--xp-app-faint)] leading-relaxed mt-2">打开后可选择替换当前小屋，或只把样板房物品合并进来。</p>
                     </div>
                     {Object.entries(displayLibrary).map(([category, assets]) => (
                         assets && assets.length > 0 && (
                             <div key={category} className="mb-6">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 sticky top-0 bg-white py-2 z-10 flex justify-between">
+                                <h4 className="text-xs font-bold text-[var(--xp-app-faint)] uppercase tracking-widest mb-3 sticky top-0 bg-white py-2 z-10 flex justify-between">
                                     {category === 'sully_special' ? 'Sully 专属 (Special)' : (category === 'custom' ? '自定义 (Custom)' : (category === 'rug' ? '地毯 (Rug)' : category))}
                                     <span className="text-[9px] bg-slate-100 px-2 rounded-full">{assets.length}</span>
                                 </h4>
@@ -2295,7 +2295,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                                                     <TokenImg value={asset.image} className="w-full h-full object-contain" />
                                                     {isCustom && asset.visibility === 'character' && <div className="absolute top-0 right-0 w-3 h-3 bg-blue-400 rounded-bl-lg" title="角色专属"></div>}
                                                 </div>
-                                                <span className="text-[10px] text-slate-500 truncate w-full text-center">{asset.name}</span>
+                                                <span className="text-[10px] text-[var(--xp-app-muted)] truncate w-full text-center">{asset.name}</span>
                                             </button>
                                         );
                                     })}
@@ -2316,11 +2316,11 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                             <TokenImg value={editImage} className="w-14 h-14 object-contain rounded-lg bg-slate-100 border shrink-0" />
                             <div className="flex-1 space-y-2">
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 block mb-1">名称</label>
+                                    <label className="text-[10px] font-bold text-[var(--xp-app-faint)] block mb-1">名称</label>
                                     <input value={editName} onChange={e => setEditName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-blue-500" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 block mb-1">图片 URL</label>
+                                    <label className="text-[10px] font-bold text-[var(--xp-app-faint)] block mb-1">图片 URL</label>
                                     {/* 上传的图片以 blobref 令牌 / data: 存，URL 框里不显示这坨（避免误当成坏链接）；
                                         留空即保留原图，填入新 URL 才覆盖。 */}
                                     <input value={(isBlobRef(editImage) || editImage.startsWith('data:')) ? '' : editImage} onChange={e => setEditImage(e.target.value)} placeholder={(isBlobRef(editImage) || editImage.startsWith('data:')) ? '已上传图片（留空保留）' : 'https://...'} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-blue-500" />
@@ -2328,34 +2328,34 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                             </div>
                         </div>
                         <div>
-                            <label className="text-[10px] font-bold text-slate-400 block mb-1">描述</label>
+                            <label className="text-[10px] font-bold text-[var(--xp-app-faint)] block mb-1">描述</label>
                             <input value={editDescription} onChange={e => setEditDescription(e.target.value)} placeholder="物品描述..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-blue-500" />
                         </div>
                         <div>
-                            <label className="text-[10px] font-bold text-slate-400 block mb-1">物品类型</label>
+                            <label className="text-[10px] font-bold text-[var(--xp-app-faint)] block mb-1">物品类型</label>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditItemType('furniture')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editItemType === 'furniture' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>家具</button>
-                                <button onClick={() => setEditItemType('rug')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editItemType === 'rug' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>地毯</button>
+                                <button onClick={() => setEditItemType('furniture')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editItemType === 'furniture' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-[var(--xp-app-faint)]'}`}>家具</button>
+                                <button onClick={() => setEditItemType('rug')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editItemType === 'rug' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-[var(--xp-app-faint)]'}`}>地毯</button>
                             </div>
-                            <p className="text-[9px] text-slate-400 mt-1">类型改动只影响之后新摆放的物品，已摆好的不受影响。</p>
+                            <p className="text-[9px] text-[var(--xp-app-faint)] mt-1">类型改动只影响之后新摆放的物品，已摆好的不受影响。</p>
                         </div>
                         <div>
-                            <label className="text-[10px] font-bold text-slate-400 block mb-1">分类</label>
+                            <label className="text-[10px] font-bold text-[var(--xp-app-faint)] block mb-1">分类</label>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditVisibility('public')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editVisibility === 'public' ? 'bg-green-50 border-green-300 text-green-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>公共</button>
-                                <button onClick={() => setEditVisibility('character')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editVisibility === 'character' ? 'bg-blue-50 border-blue-300 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>角色专属</button>
+                                <button onClick={() => setEditVisibility('public')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editVisibility === 'public' ? 'bg-green-50 border-green-300 text-green-600' : 'bg-slate-50 border-slate-200 text-[var(--xp-app-faint)]'}`}>公共</button>
+                                <button onClick={() => setEditVisibility('character')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${editVisibility === 'character' ? 'bg-blue-50 border-blue-300 text-blue-600' : 'bg-slate-50 border-slate-200 text-[var(--xp-app-faint)]'}`}>角色专属</button>
                             </div>
                         </div>
                         {editVisibility === 'character' && (
                             <div>
-                                <label className="text-[10px] font-bold text-slate-400 block mb-1">指定角色（可多选）</label>
+                                <label className="text-[10px] font-bold text-[var(--xp-app-faint)] block mb-1">指定角色（可多选）</label>
                                 {/* 分组筛选只影响下方显示哪些可选项，已勾选的角色不会因为切组被移除 */}
                                 <CharacterGroupFilterBar characters={characters} groups={characterGroups}
                                     value={assignGroupId} onChange={setAssignGroupId} className="mb-2" />
                                 <div className="flex flex-wrap gap-2">
                                     {filterCharactersByGroup(characters, characterGroups, assignGroupId).map(c => (
                                         <button key={c.id} onClick={() => setEditAssignedCharIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id])}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${editAssignedCharIds.includes(c.id) ? 'bg-blue-100 border-blue-300 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${editAssignedCharIds.includes(c.id) ? 'bg-blue-100 border-blue-300 text-blue-600' : 'bg-slate-50 border-slate-200 text-[var(--xp-app-faint)]'}`}
                                         >
                                             {c.name}
                                         </button>
@@ -2373,32 +2373,32 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                 <div className="space-y-4">
                     <div className="flex gap-4">
                         <div onClick={() => customItemInputRef.current?.click()} className="aspect-square w-24 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer hover:border-purple-400 relative overflow-hidden shrink-0">
-                            {customItemImage ? <TokenImg value={customItemImage} className="w-full h-full object-contain" /> : <span className="text-slate-400 text-xs">+ 上传</span>}
+                            {customItemImage ? <TokenImg value={customItemImage} className="w-full h-full object-contain" /> : <span className="text-[var(--xp-app-faint)] text-xs">+ 上传</span>}
                             <input type="file" ref={customItemInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'custom_item')} />
                         </div>
                         <div className="flex-1 space-y-2">
                             <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">图片 URL (推荐图床)</label>
+                                <label className="text-[10px] font-bold text-[var(--xp-app-faint)] uppercase block mb-1">图片 URL (推荐图床)</label>
                                 <input value={customItemUrl} onChange={e => setCustomItemUrl(e.target.value)} placeholder="https://..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-purple-500" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">物品名称</label>
+                                <label className="text-[10px] font-bold text-[var(--xp-app-faint)] uppercase block mb-1">物品名称</label>
                                 <input value={customItemName} onChange={e => setCustomItemName(e.target.value)} placeholder="例如: 懒人沙发" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-purple-500 font-bold" />
                             </div>
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">物品类型</label>
+                        <label className="text-[10px] font-bold text-[var(--xp-app-faint)] uppercase block mb-1">物品类型</label>
                         <div className="flex gap-2">
-                            <button onClick={() => setCustomItemType('furniture')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${customItemType === 'furniture' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>家具</button>
-                            <button onClick={() => setCustomItemType('rug')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${customItemType === 'rug' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>地毯</button>
+                            <button onClick={() => setCustomItemType('furniture')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${customItemType === 'furniture' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-[var(--xp-app-faint)]'}`}>家具</button>
+                            <button onClick={() => setCustomItemType('rug')} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${customItemType === 'rug' ? 'bg-purple-50 border-purple-300 text-purple-600' : 'bg-slate-50 border-slate-200 text-[var(--xp-app-faint)]'}`}>地毯</button>
                         </div>
-                        <p className="text-[9px] text-slate-400 mt-1">地毯永远铺在最底层，角色和其它家具都会压在它上面。</p>
+                        <p className="text-[9px] text-[var(--xp-app-faint)] mt-1">地毯永远铺在最底层，角色和其它家具都会压在它上面。</p>
                     </div>
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">物品描述</label>
+                        <label className="text-[10px] font-bold text-[var(--xp-app-faint)] uppercase block mb-1">物品描述</label>
                         <input value={customItemDescription} onChange={e => setCustomItemDescription(e.target.value)} placeholder="例如: 一个很软的沙发，坐上去就陷进去了。" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-purple-500" />
-                        <p className="text-[9px] text-slate-400 mt-1">这段描述会告诉 AI 这是什么，以及如何互动。</p>
+                        <p className="text-[9px] text-[var(--xp-app-faint)] mt-1">这段描述会告诉 AI 这是什么，以及如何互动。</p>
                     </div>
                 </div>
             </Modal>
@@ -2407,9 +2407,9 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
             <Modal isOpen={showSettingsModal} title="装修设置" onClose={() => setShowSettingsModal(false)}>
                 <div className="space-y-6">
                     <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">背景调整</h4>
+                        <h4 className="text-xs font-bold text-[var(--xp-app-faint)] uppercase tracking-widest border-b border-slate-100 pb-2">背景调整</h4>
                         <div>
-                            <div className="flex justify-between mb-1"><label className="text-xs font-bold text-slate-600">墙纸缩放 ({char?.roomConfig?.wallScale || 0}%)</label><span className="text-[10px] text-slate-400">{char?.roomConfig?.wallScale ? `${char.roomConfig.wallScale}%` : 'Cover (Default)'}</span></div>
+                            <div className="flex justify-between mb-1"><label className="text-xs font-bold text-slate-600">墙纸缩放 ({char?.roomConfig?.wallScale || 0}%)</label><span className="text-[10px] text-[var(--xp-app-faint)]">{char?.roomConfig?.wallScale ? `${char.roomConfig.wallScale}%` : 'Cover (Default)'}</span></div>
                             <input type="range" min="0" max="200" step="10" value={char?.roomConfig?.wallScale || 0} onChange={e => updateBgConfig({ wallScale: parseInt(e.target.value) })} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
                             <div className="flex items-center gap-2 mt-2">
                                 <input type="checkbox" id="wallRepeat" checked={char?.roomConfig?.wallRepeat || false} onChange={e => updateBgConfig({ wallRepeat: e.target.checked })} className="accent-blue-500" />
@@ -2417,7 +2417,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                             </div>
                         </div>
                         <div>
-                            <div className="flex justify-between mb-1"><label className="text-xs font-bold text-slate-600">地板缩放 ({char?.roomConfig?.floorScale || 0}%)</label><span className="text-[10px] text-slate-400">{char?.roomConfig?.floorScale ? `${char.roomConfig.floorScale}%` : 'Cover (Default)'}</span></div>
+                            <div className="flex justify-between mb-1"><label className="text-xs font-bold text-slate-600">地板缩放 ({char?.roomConfig?.floorScale || 0}%)</label><span className="text-[10px] text-[var(--xp-app-faint)]">{char?.roomConfig?.floorScale ? `${char.roomConfig.floorScale}%` : 'Cover (Default)'}</span></div>
                             <input type="range" min="0" max="200" step="10" value={char?.roomConfig?.floorScale || 0} onChange={e => updateBgConfig({ floorScale: parseInt(e.target.value) })} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
                             <div className="flex items-center gap-2 mt-2">
                                 <input type="checkbox" id="floorRepeat" checked={char?.roomConfig?.floorRepeat || false} onChange={e => updateBgConfig({ floorRepeat: e.target.checked })} className="accent-blue-500" />
@@ -2428,22 +2428,22 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
 
                     {isSully && (
                         <div className="pt-4 border-t border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Sully 专属维护</h4>
+                            <h4 className="text-xs font-bold text-[var(--xp-app-faint)] uppercase tracking-widest mb-3">Sully 专属维护</h4>
                             <button onClick={resetSullyRoom} className="w-full py-3 bg-red-50 text-red-500 font-bold rounded-2xl border border-red-100 flex items-center justify-center gap-2 active:scale-95 transition-transform">
                                 <img src={twemojiUrl('1f9f9')} alt="broom" className="w-5 h-5" /> 还原初始样板房
                             </button>
-                            <p className="text-[9px] text-slate-400 mt-2 text-center">如果不小心弄乱了房间，点此可一键恢复默认布局。</p>
+                            <p className="text-[9px] text-[var(--xp-app-faint)] mt-2 text-center">如果不小心弄乱了房间，点此可一键恢复默认布局。</p>
                         </div>
                     )}
                 </div>
             </Modal>
 
             {/* Refresh Confirmation Modal */}
-            <Modal isOpen={showRefreshConfirm} title="强制刷新?" onClose={() => setShowRefreshConfirm(false)} footer={<div className="flex gap-2 w-full"><button onClick={() => setShowRefreshConfirm(false)} className="flex-1 py-3 bg-slate-100 text-slate-500 rounded-2xl font-bold">取消</button><button onClick={handleForceRefresh} className="flex-1 py-3 bg-red-500 text-white font-bold rounded-2xl">少管我!</button></div>}>
+            <Modal isOpen={showRefreshConfirm} title="强制刷新?" onClose={() => setShowRefreshConfirm(false)} footer={<div className="flex gap-2 w-full"><button onClick={() => setShowRefreshConfirm(false)} className="flex-1 py-3 bg-slate-100 text-[var(--xp-app-muted)] rounded-2xl font-bold">取消</button><button onClick={handleForceRefresh} className="flex-1 py-3 bg-red-500 text-white font-bold rounded-2xl">少管我!</button></div>}>
                 <div className="text-center py-4 space-y-2">
                     <div><img src={twemojiUrl('1f570-fe0f')} alt="clock" className="w-10 h-10 mx-auto" /></div>
                     <p className="text-sm text-slate-600 font-bold">每天早上 6:00 自动刷新</p>
-                    <p className="text-xs text-slate-400">还没到时间哦，确定要消耗算力强制重新生成今天的房间状态吗？</p>
+                    <p className="text-xs text-[var(--xp-app-faint)]">还没到时间哦，确定要消耗算力强制重新生成今天的房间状态吗？</p>
                 </div>
             </Modal>
 
@@ -2461,11 +2461,11 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">小屋名称</label>
+                        <label className="text-[10px] font-bold text-[var(--xp-app-faint)] uppercase block mb-1">小屋名称</label>
                         <input value={exportName} onChange={e => setExportName(e.target.value)} placeholder={`${char?.name || ''}的小屋`} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-emerald-500" />
                     </div>
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">小屋描述</label>
+                        <label className="text-[10px] font-bold text-[var(--xp-app-faint)] uppercase block mb-1">小屋描述</label>
                         <textarea value={exportDescription} onChange={e => setExportDescription(e.target.value)} rows={3} placeholder="介绍一下这套样板房：风格、亮点、适合谁住…" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-emerald-500 resize-none" />
                     </div>
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 text-[10px] text-emerald-700 leading-relaxed">
@@ -2492,9 +2492,9 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                         <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5">
                             <p className="text-sm font-bold text-slate-700">{typeof pendingImport.name === 'string' && pendingImport.name ? pendingImport.name : '未命名小屋'}</p>
                             {typeof pendingImport.description === 'string' && pendingImport.description && (
-                                <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{pendingImport.description}</p>
+                                <p className="text-[11px] text-[var(--xp-app-faint)] mt-1 leading-relaxed">{pendingImport.description}</p>
                             )}
-                            <p className="text-[10px] text-slate-400 mt-1.5">共 {pendingImport.items.length} 件物品{pendingImport.room?.wallImage || pendingImport.room?.floorImage ? ' · 含墙面/地板' : ''}</p>
+                            <p className="text-[10px] text-[var(--xp-app-faint)] mt-1.5">共 {pendingImport.items.length} 件物品{pendingImport.room?.wallImage || pendingImport.room?.floorImage ? ' · 含墙面/地板' : ''}</p>
                         </div>
                         <div className="bg-sky-50 border border-sky-100 rounded-xl px-3 py-2.5 text-[10px] text-sky-700 leading-relaxed">
                             <b>替换</b>：清掉现有家具，按样板房原样复原（含墙面/地板）。
@@ -2514,7 +2514,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
             >
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2">布局数据 (Layout JSON)</h4>
+                        <h4 className="text-[10px] font-bold text-[var(--xp-app-faint)] uppercase mb-2">布局数据 (Layout JSON)</h4>
                         <div className="bg-slate-100 rounded-xl p-3 border border-slate-200 mb-2">
                             <pre className="text-[10px] text-slate-600 font-mono h-20 overflow-y-auto whitespace-pre-wrap select-all">
                                 {JSON.stringify(items, null, 2)}
@@ -2531,7 +2531,7 @@ ${!shouldGenerateTodo ? `(系统: 今日待办已存在，无需生成，请忽�
                             </pre>
                         </div>
                         <button onClick={() => { if(lastPrompt) { navigator.clipboard.writeText(lastPrompt); addToast('Prompt Copied', 'success'); } else addToast('No prompt yet', 'error'); }} className="w-full py-2 bg-red-500 text-white text-xs font-bold rounded-xl">复制 Prompt 到剪贴板</button>
-                        <p className="text-[9px] text-slate-400 mt-2 text-center">如果 AI 回复为空，请复制此 Prompt 检查是否有乱码/Base64 混入。</p>
+                        <p className="text-[9px] text-[var(--xp-app-faint)] mt-2 text-center">如果 AI 回复为空，请复制此 Prompt 检查是否有乱码/Base64 混入。</p>
                     </div>
                 </div>
             </Modal>
