@@ -25,18 +25,20 @@ const PrivateSettings: React.FC = () => {
   useEffect(() => { void check(); }, []);
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-[#fff8e8] text-[#221d1a]">
-      <div className="xp-private-app-content">
-        <header className="xp-private-app-header -mx-1 mb-7">
-          <button onClick={closeApp} className="xp-private-back">
-            <ArrowLeft size={18} />
-          </button>
-          <div>
-            <h1 className="xp-private-title">设置</h1>
-            <p className="xp-private-subtitle mt-1">只保留这台小手机自己需要的东西。</p>
-          </div>
-        </header>
+    <div className="xp-private-app-page">
+      <header className="xp-private-app-header">
+        <button onClick={closeApp} className="xp-private-back">
+          <ArrowLeft size={18} />
+        </button>
+        <div className="min-w-0">
+          <div className="xp-private-eyebrow">PRIVATE PHONE</div>
+          <h1 className="xp-private-title">设置</h1>
+        </div>
+        <div className="w-[var(--xp-back-size)]" />
+      </header>
 
+      <div className="xp-private-app-content">
+        <p className="xp-private-subtitle mb-5">只保留这台小手机自己需要的东西。</p>
         <section className="xp-private-card mt-0 overflow-hidden">
           <div className="flex items-center gap-4 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eee9e3]"><UserCircle size={24} /></div>
