@@ -26,18 +26,18 @@ const PrivateSettings: React.FC = () => {
 
   return (
     <div className="h-full w-full overflow-y-auto bg-[#fff8e8] text-[#221d1a]">
-      <div className="mx-auto min-h-full w-full max-w-[680px] px-5 pb-16 pt-[max(1.25rem,var(--safe-top,0px))]">
-        <header className="flex items-center gap-4">
-          <button onClick={closeApp} className="flex h-10 w-10 items-center justify-center rounded-full border border-black/[0.07] bg-white/70">
+      <div className="xp-private-app-content">
+        <header className="xp-private-app-header -mx-1 mb-7">
+          <button onClick={closeApp} className="xp-private-back">
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-xl font-semibold">设置</h1>
-            <p className="mt-0.5 text-[11px] text-black/40">只保留这台小手机自己需要的东西。</p>
+            <h1 className="xp-private-title">设置</h1>
+            <p className="xp-private-subtitle mt-1">只保留这台小手机自己需要的东西。</p>
           </div>
         </header>
 
-        <section className="mt-8 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdf7]">
+        <section className="xp-private-card mt-0 overflow-hidden">
           <div className="flex items-center gap-4 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eee9e3]"><UserCircle size={24} /></div>
             <div className="flex-1">
@@ -47,7 +47,7 @@ const PrivateSettings: React.FC = () => {
           </div>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdf7]">
+        <section className="xp-private-card mt-4 overflow-hidden">
           <div className="flex items-center gap-4 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eee9e3]"><HardDrives size={23} /></div>
             <div className="min-w-0 flex-1">
@@ -63,7 +63,7 @@ const PrivateSettings: React.FC = () => {
           </button>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[24px] border border-black/[0.07] bg-[#fffdf7]">
+        <section className="xp-private-card mt-4 overflow-hidden">
           <div className="p-5">
             <div className="text-sm font-semibold">本机错误日志</div>
             <div className="mt-1 text-xs text-black/45">{systemLogs.length ? '当前有 ' + systemLogs.length + ' 条记录' : '目前干净。'}</div>
