@@ -332,8 +332,8 @@ const HandbookApp: React.FC = () => {
             >
                 <button
                     onClick={handleBack}
-                    className="w-9 h-9 flex items-center justify-center rounded-full active:scale-95 transition"
-                    style={{ background: 'rgba(253,246,231,0.7)', color: PAPER_TONES.ink }}
+                    className="xp-native-back active:scale-95 transition"
+                    style={{ color: 'var(--xp-app-text)' }}
                 >
                     <CaretLeft className="w-4 h-4" weight="bold" />
                 </button>
