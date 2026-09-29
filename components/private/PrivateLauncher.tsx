@@ -1,51 +1,67 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  CalendarBlank, Camera, Clock, EnvelopeSimple, FolderSimple, Gear,
-  Heart, House, ImageSquare, MapPin, MusicNote, NotePencil, Phone,
-  Sparkle, Storefront, Wallet, CloudSun, ListHeart, Shapes, FlowerTulip,
-  ChatCircleDots, Compass, GridFour,
+  CalendarBlank, Clock, EnvelopeSimple, Gear, Heart, House,
+  ImageSquare, MusicNote, NotePencil, Sparkle, ListHeart, Shapes,
+  FlowerTulip, ChatCircleDots, Compass, GridFour, BookOpenText,
+  FilmStrip, DiceFive, Detective,
 } from '@phosphor-icons/react';
 import { AppID } from '../../types';
 import { useOS } from '../../context/OSContext';
 import PrivateAppIcon from './PrivateAppIcon';
 
+export type PrivateModuleId =
+  | 'mailbox'
+  | 'calendar'
+  | 'memory'
+  | 'listening'
+  | 'reading'
+  | 'movie'
+  | 'cedar'
+  | 'coc';
+
 type Tile = {
-  id: AppID;
+  key: string;
   label: string;
   icon: React.ReactNode;
   variant?: 'paper' | 'red' | 'pink' | 'map';
+  appId?: AppID;
+  privateModule?: PrivateModuleId;
 };
 
+interface Props {
+  onOpenPrivateModule: (module: PrivateModuleId) => void;
+}
+
 const APPS: Tile[] = [
-  { id: AppID.Schedule, label: 'Calendar', icon: <CalendarBlank size={31} weight="duotone" /> },
-  { id: AppID.Gallery, label: 'Photos', icon: <FlowerTulip size={31} weight="duotone" /> },
-  { id: AppID.Date, label: 'Camera', icon: <Camera size={31} weight="duotone" /> },
-  { id: AppID.HotNews, label: 'Weather', icon: <CloudSun size={31} weight="fill" />, variant: 'red' },
+  { key: 'journal', appId: AppID.Journal, label: '交换日记', icon: <NotePencil size={31} weight="duotone" /> },
+  { key: 'gallery', appId: AppID.Gallery, label: '相册', icon: <FlowerTulip size={31} weight="duotone" /> },
+  { key: 'mailbox', privateModule: 'mailbox', label: '信箱', icon: <EnvelopeSimple size={31} weight="regular" />, variant: 'red' },
+  { key: 'calendar', privateModule: 'calendar', label: '日历', icon: <CalendarBlank size={31} weight="duotone" /> },
 
-  { id: AppID.Journal, label: 'Notes', icon: <NotePencil size={31} weight="duotone" /> },
-  { id: AppID.SpecialMoments, label: 'Clock', icon: <Clock size={31} weight="duotone" /> },
-  { id: AppID.Browser, label: 'Maps', icon: <MapPin size={31} weight="fill" />, variant: 'map' },
-  { id: AppID.Handbook, label: 'Reminders', icon: <ListHeart size={31} weight="duotone" /> },
+  { key: 'social', appId: AppID.Social, label: '动态', icon: <ChatCircleDots size={31} weight="fill" />, variant: 'pink' },
+  { key: 'memory', privateModule: 'memory', label: '记忆', icon: <Heart size={31} weight="fill" />, variant: 'red' },
+  { key: 'room', appId: AppID.Room, label: '小小窝', icon: <House size={31} weight="fill" /> },
+  { key: 'check-phone', appId: AppID.CheckPhone, label: '查手机', icon: <GridFour size={31} weight="fill" /> },
 
-  { id: AppID.Music, label: 'Music', icon: <MusicNote size={31} weight="fill" />, variant: 'red' },
-  { id: AppID.Game, label: 'App Store', icon: <Shapes size={31} weight="fill" />, variant: 'pink' },
-  { id: AppID.Settings, label: 'Settings', icon: <Gear size={31} weight="fill" /> },
-  { id: AppID.Bank, label: 'Files', icon: <FolderSimple size={31} weight="fill" />, variant: 'pink' },
+  { key: 'listening', privateModule: 'listening', label: '一起听', icon: <MusicNote size={31} weight="fill" />, variant: 'red' },
+  { key: 'reading', privateModule: 'reading', label: '共读', icon: <BookOpenText size={31} weight="duotone" /> },
+  { key: 'movie', privateModule: 'movie', label: '电影', icon: <FilmStrip size={31} weight="duotone" />, variant: 'pink' },
+  { key: 'cedar', privateModule: 'cedar', label: '双弈', icon: <DiceFive size={31} weight="fill" /> },
 
-  { id: AppID.Chat, label: 'Mail', icon: <EnvelopeSimple size={31} weight="regular" /> },
-  { id: AppID.MemoryPalace, label: 'Health', icon: <Heart size={31} weight="fill" />, variant: 'red' },
-  { id: AppID.CheckPhone, label: 'Wallet', icon: <Wallet size={31} weight="fill" /> },
-  { id: AppID.Worldbook, label: 'Shortcuts', icon: <Shapes size={31} weight="fill" />, variant: 'pink' },
+  { key: 'coc', privateModule: 'coc', label: 'COC', icon: <Detective size={31} weight="duotone" /> },
+  { key: 'handbook', appId: AppID.Handbook, label: '手账', icon: <ListHeart size={31} weight="duotone" /> },
+  { key: 'special', appId: AppID.SpecialMoments, label: '特别日子', icon: <Sparkle size={31} weight="fill" />, variant: 'pink' },
+  { key: 'settings', appId: AppID.Settings, label: '设置', icon: <Gear size={31} weight="fill" /> },
 ];
 
 const DOCK: Tile[] = [
-  { id: AppID.Call, label: 'Phone', icon: <Phone size={31} weight="fill" />, variant: 'paper' },
-  { id: AppID.Social, label: 'Messages', icon: <ChatCircleDots size={31} weight="fill" />, variant: 'pink' },
-  { id: AppID.Browser, label: 'Safari', icon: <Compass size={31} weight="fill" />, variant: 'paper' },
-  { id: AppID.Music, label: 'Music', icon: <MusicNote size={31} weight="fill" />, variant: 'paper' },
+  { key: 'dock-journal', appId: AppID.Journal, label: '交换日记', icon: <NotePencil size={31} weight="duotone" /> },
+  { key: 'dock-gallery', appId: AppID.Gallery, label: '相册', icon: <ImageSquare size={31} weight="fill" />, variant: 'pink' },
+  { key: 'dock-social', appId: AppID.Social, label: '动态', icon: <ChatCircleDots size={31} weight="fill" />, variant: 'red' },
+  { key: 'dock-room', appId: AppID.Room, label: '小小窝', icon: <House size={31} weight="fill" /> },
 ];
 
-const PrivateLauncher: React.FC = () => {
+const PrivateLauncher: React.FC<Props> = ({ onOpenPrivateModule }) => {
   const { openApp } = useOS();
   const [now, setNow] = useState(() => new Date());
   const [mascotMissing, setMascotMissing] = useState(false);
@@ -59,6 +75,14 @@ const PrivateLauncher: React.FC = () => {
     () => now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
     [now],
   );
+
+  const openTile = (tile: Tile) => {
+    if (tile.privateModule) {
+      onOpenPrivateModule(tile.privateModule);
+      return;
+    }
+    if (tile.appId) openApp(tile.appId);
+  };
 
   return (
     <div className="xp-home-wallpaper relative h-full w-full overflow-hidden bg-[#FFF8EF] text-[#7D3037]">
@@ -75,15 +99,15 @@ const PrivateLauncher: React.FC = () => {
 
       <main className="relative z-10 mx-auto h-full w-full max-w-[430px] px-7 pt-[max(8.7rem,calc(var(--safe-top,0px)+7.5rem))]">
         <div className="grid grid-cols-4 gap-x-5 gap-y-[22px]">
-          {APPS.map(app => (
+          {APPS.map(tile => (
             <button
-              key={app.id + app.label}
-              onClick={() => openApp(app.id)}
+              key={tile.key}
+              onClick={() => openTile(tile)}
               className="xp-press flex min-w-0 flex-col items-center gap-[7px]"
             >
-              <PrivateAppIcon appId={app.id + '-' + app.label.toLowerCase().replace(/\s+/g,'-')} fallback={app.icon} variant={app.variant} />
+              <PrivateAppIcon appId={tile.key} fallback={tile.icon} variant={tile.variant} />
               <span className="max-w-[74px] truncate text-center text-[12px] font-semibold tracking-[-0.01em] text-[#9B3C45]">
-                {app.label}
+                {tile.label}
               </span>
             </button>
           ))}
@@ -116,9 +140,9 @@ const PrivateLauncher: React.FC = () => {
 
       <div className="xp-dock absolute bottom-[max(1.05rem,var(--safe-bottom,0px))] left-1/2 z-30 w-[calc(100%-34px)] max-w-[396px] -translate-x-1/2 rounded-[34px] px-5 py-[12px]">
         <div className="flex items-center justify-between">
-          {DOCK.map(app => (
-            <button key={app.id + app.label} onClick={() => openApp(app.id)} className="xp-press">
-              <PrivateAppIcon appId={'dock-' + app.id} fallback={app.icon} variant={app.variant} size="sm" />
+          {DOCK.map(tile => (
+            <button key={tile.key} onClick={() => openTile(tile)} className="xp-press" aria-label={tile.label}>
+              <PrivateAppIcon appId={tile.key} fallback={tile.icon} variant={tile.variant} size="sm" />
             </button>
           ))}
         </div>
