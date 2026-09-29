@@ -1065,8 +1065,8 @@ ${buildSparkCommentHistory(post)}
             {isCreateOpen && (
                 <div className="absolute inset-0 z-50 bg-[var(--xp-app-bg)] flex flex-col animate-slide-up">
                     {/* Create Header —— 自理安全区：外层扛 safe-top + 背景，内层保持 h-14 内容栏（同主栏，避开 border-box 吃 padding） */}
-                    <div className="xp-native-header sticky top-0 z-20" style={{ paddingTop: 'var(--safe-top)' }}>
-                        <div className="h-14 flex items-center justify-between px-4">
+                    <div className="xp-native-header sticky top-0 z-20">
+                        <div className="xp-native-nav justify-between">
                             <button onClick={() => setIsCreateOpen(false)} className="text-slate-600 text-sm font-bold px-2 py-1">取消</button>
                             <span className="text-sm font-bold text-slate-800">发布笔记</span>
                             <button
@@ -1119,8 +1119,8 @@ ${buildSparkCommentHistory(post)}
                 {/* Top Nav - Glass —— 自理安全区：外层扛 safe-top + 背景（无固定高度，padding 正常撑开到刘海/灵动岛下），
                     内层保持 h-11 内容栏、文字居中。不能把 paddingTop 直接加到 h-11 上：border-box 会把 padding 吃进
                     固定高度，content-box 塌成 0，文字被挤到白条下沿、跨在白/渐变交界上被劈开。sticky 必须留在外层。 */}
-                <div className="xp-native-header sticky top-0 z-30" style={{ paddingTop: 'var(--safe-top)' }}>
-                    <div className="h-11 flex items-center justify-between px-4">
+                <div className="xp-native-header sticky top-0 z-30">
+                    <div className="xp-native-nav justify-between">
                         <button onClick={closeApp} className="xp-native-back"><Icons.Back onClick={closeApp} /></button>
                         <div className="flex gap-6 text-base font-bold text-[var(--xp-app-faint)]">
                             <button className={`${activeTab === 'home' ? 'text-[var(--xp-app-text)] border-b-2 border-[var(--xp-app-accent)] pb-1' : 'hover:text-slate-500'} transition-all`} onClick={() => { setActiveTab('home'); trackEvent('切换 Spark 主标签', { tab: 'home' }); }}>发现</button>
