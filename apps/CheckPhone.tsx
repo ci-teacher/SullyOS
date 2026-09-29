@@ -3641,17 +3641,18 @@ ${olderText}
     if (view === 'select') {
         return (
             <div className="xp-native-page absolute inset-0 flex flex-col overflow-hidden">
-                <StatusStrip />
-                <div className="h-14 flex items-center justify-between px-4 shrink-0">
-                    <button onClick={closeApp} className="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-white/80 bg-white/[0.05] border border-white/[0.08] active:scale-90 transition">
+                <div className="xp-native-header shrink-0">
+                  <div className="xp-native-nav-grid">
+                    <button onClick={closeApp} className="xp-native-back active:scale-95 transition">
                         <CaretLeft size={18} weight="bold" />
                     </button>
-                    <span className="font-bold tracking-[0.18em] uppercase text-[11px] text-[var(--xp-app-text)]">Target Device</span>
+                    <span className="text-center font-bold tracking-[0.12em] text-[13px] text-[var(--xp-app-text)]">查手机</span>
                     <button onClick={() => { setPhoneApiTestResult(null); setShowApiSettings(true); }} aria-label="查手机 API 设置"
                         className="xp-native-back relative active:scale-95 transition">
                         <GearSix size={17} weight={phoneApiFollowsDefault ? 'regular' : 'fill'} />
                         {!phoneApiFollowsDefault && <span className="absolute right-1.5 bottom-1.5 h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_6px_#a78bfa]" />}
                     </button>
+                  </div>
                 </div>
                 {(() => {
                     const PER_PAGE = 6;
