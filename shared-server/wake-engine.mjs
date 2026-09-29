@@ -11,6 +11,8 @@ const COOLDOWN_MS = Number(process.env.WAKE_COOLDOWN_MS || 2 * 60 * 60_000);
 const LONG_SILENCE_MS = Number(process.env.WAKE_LONG_SILENCE_MS || 8 * 60 * 60_000);
 const RANDOM_MEAN_HOURS = Math.max(1, Number(process.env.WAKE_RANDOM_MEAN_HOURS || 10));
 const SIGNAL_TTL_MS = Number(process.env.WAKE_SIGNAL_TTL_MS || 4 * 60 * 60_000);
+const SLACK_WAKE_WEBHOOK_URL = String(process.env.SLACK_WAKE_WEBHOOK_URL || '').trim();
+const WAKE_PHONE_URL = String(process.env.WAKE_PHONE_URL || 'https://phone.meimeibw.cc/?actor=laoshi').trim();
 const ONCE = process.argv.includes('--once');
 
 const db = new DatabaseSync(DB_PATH);
@@ -29,7 +31,10 @@ CREATE TABLE IF NOT EXISTS wake_signals (
   claimed_at INTEGER,
   claim_expires_at INTEGER,
   resolution TEXT,
-  result_payload TEXT
+  result_payload TEXT,
+  doorbell_status TEXT,
+  doorbell_attempts INTEGER NOT NULL DEFAULT 0,
+  doorbell_sent_at INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_wake_status_created ON wake_signals(status, created_at DESC);
 
@@ -107,6 +112,15 @@ if (!wakeColumns.some(row => row.name === 'resolution')) {
 if (!wakeColumns.some(row => row.name === 'result_payload')) {
   db.exec('ALTER TABLE wake_signals ADD COLUMN result_payload TEXT');
 }
+if (!wakeColumns.some(row => row.name === 'doorbell_status')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN doorbell_status TEXT');
+}
+if (!wakeColumns.some(row => row.name === 'doorbell_attempts')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN doorbell_attempts INTEGER NOT NULL DEFAULT 0');
+}
+if (!wakeColumns.some(row => row.name === 'doorbell_sent_at')) {
+  db.exec('ALTER TABLE wake_signals ADD COLUMN doorbell_sent_at INTEGER');
+}
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wake_dedupe_key ON wake_signals(dedupe_key) WHERE dedupe_key IS NOT NULL");
 
 const qPending = db.prepare("SELECT * FROM wake_signals WHERE status='pending' AND (expires_at IS NULL OR expires_at > ?) ORDER BY priority DESC, created_at ASC LIMIT 1");
@@ -149,6 +163,16 @@ ORDER BY updated_at DESC
 LIMIT 8
 `);
 const qAnniversaries = db.prepare("SELECT id, payload, updated_at FROM shared_resources WHERE kind='anniversary' AND deleted=0");
+const qDoorbellPending = db.prepare(`
+SELECT *
+FROM wake_signals
+WHERE status='pending'
+  AND (expires_at IS NULL OR expires_at > ?)
+  AND COALESCE(doorbell_status, '') != 'sent'
+ORDER BY priority DESC, created_at ASC
+LIMIT 1
+`);
+const qDoorbellAttempt = db.prepare("UPDATE wake_signals SET doorbell_status=?, doorbell_attempts=COALESCE(doorbell_attempts,0)+1, doorbell_sent_at=? WHERE id=?");
 
 function localHour(now = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -179,6 +203,54 @@ function localIsoDate(timestamp) {
   }).formatToParts(new Date(timestamp));
   const get = type => parts.find(part => part.type === type)?.value || '';
   return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+function wakeReasonLabel(reason) {
+  return ({
+    anniversary_today: '今天有纪念日',
+    anniversary_tomorrow: '明天有纪念日',
+    new_letter: '小词留了一封新信',
+    new_calendar: '共享日历有新内容',
+    new_memory: '小词留下了一条新记忆',
+    new_special: '有新的特别记录',
+    external_event: '有新的外部事件',
+    unfinished_session_updated: '共同活动有新进展',
+    new_xiaoci_activity: '小词刚在小手机里活动过',
+    long_silence_with_user_activity: '小词来过一阵子了',
+    random_impulse: '随机想回小手机看看',
+  }[reason] || reason);
+}
+
+async function flushSlackDoorbell() {
+  if (!SLACK_WAKE_WEBHOOK_URL) return;
+
+  const row = qDoorbellPending.get(Date.now());
+  if (!row) return;
+
+  const text = [
+    '[xiaoci-phone wake]',
+    wakeReasonLabel(row.reason),
+    `reason=${row.reason}`,
+    `priority=${row.priority}`,
+    `signal=${row.id}`,
+    `open=${WAKE_PHONE_URL}`,
+  ].join('\n');
+
+  try {
+    const response = await fetch(SLACK_WAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) throw new Error(`Slack webhook HTTP ${response.status}`);
+    qDoorbellAttempt.run('sent', Date.now(), row.id);
+    console.log(`[wake-engine] Slack doorbell sent for ${row.id}`);
+  } catch (error) {
+    qDoorbellAttempt.run('failed', null, row.id);
+    console.error('[wake-engine] Slack doorbell failed', error);
+  }
 }
 
 function entryPriority(type) {
@@ -384,15 +456,19 @@ function runOnce() {
   console.log('[wake-engine] no signal');
 }
 
-function safeRun() {
-  try { runOnce(); }
-  catch (error) { console.error('[wake-engine] failed', error); }
+async function safeRun() {
+  try {
+    runOnce();
+    await flushSlackDoorbell();
+  } catch (error) {
+    console.error('[wake-engine] failed', error);
+  }
 }
 
-safeRun();
+await safeRun();
 
 if (!ONCE) {
-  setInterval(safeRun, INTERVAL_MS).unref();
+  setInterval(() => { void safeRun(); }, INTERVAL_MS).unref();
   console.log(`[wake-engine] running every ${Math.round(INTERVAL_MS / 60000)} min; timezone=${TIMEZONE}`);
   await new Promise(() => {});
 }
