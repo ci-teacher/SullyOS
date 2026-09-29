@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import { House, X } from '@phosphor-icons/react';
+import { X } from '@phosphor-icons/react';
 import { AppID } from '../../types';
 import { useOS } from '../../context/OSContext';
 import PrivateLauncher, { type PrivateModuleId } from './PrivateLauncher';
@@ -70,13 +70,6 @@ const PrivatePhoneShell: React.FC = () => {
     if (activeApp !== AppID.Launcher) setPrivateModule(null);
   }, [activeApp]);
 
-  const goHome = () => {
-    if (privateModule) {
-      setPrivateModule(null);
-      return;
-    }
-    closeApp();
-  };
 
   if (!isDataLoaded) {
     return (
@@ -87,7 +80,7 @@ const PrivatePhoneShell: React.FC = () => {
   }
 
   const renderApp = () => {
-    if (privateModule) return <PrivateModulePlaceholder module={privateModule} />;
+    if (privateModule) return <PrivateModulePlaceholder module={privateModule} onBack={() => setPrivateModule(null)} />;
 
     switch (activeApp) {
       case AppID.Launcher: return <PrivateLauncher onOpenPrivateModule={setPrivateModule} />;
@@ -130,27 +123,19 @@ const PrivatePhoneShell: React.FC = () => {
     }
   };
 
-  const awayFromHome = privateModule !== null || activeApp !== AppID.Launcher;
 
   return (
     <div className="xiaoci-private xp-desktop-stage">
       <div className="xp-phone-frame">
         <Suspense fallback={<Loading />}>
-          <div key={privateModule || activeApp} className="h-full w-full">
+          <div
+            key={privateModule || activeApp}
+            className="xp-app-surface h-full w-full"
+            data-xp-app={privateModule || activeApp}
+          >
             {renderApp()}
           </div>
         </Suspense>
-
-        {awayFromHome && (
-          <button
-            aria-label="返回小手机首页"
-            onClick={goHome}
-            className="absolute bottom-[max(0.9rem,var(--safe-bottom,0px))] left-1/2 z-[80] flex h-10 -translate-x-1/2 items-center gap-2 rounded-full border border-black/[0.08] bg-[#fffdfa]/95 px-4 text-[11px] font-medium text-black/55 shadow-[0_8px_28px_rgba(30,20,16,0.12)] backdrop-blur-md active:scale-95"
-          >
-            <House size={15} weight="fill" />
-            小手机
-          </button>
-        )}
 
         <div className="pointer-events-none absolute left-1/2 top-[max(1rem,var(--safe-top,0px))] z-[150] flex w-[min(88%,390px)] -translate-x-1/2 flex-col gap-2">
           {toasts.map(toast => (
