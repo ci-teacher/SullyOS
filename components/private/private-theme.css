@@ -115,6 +115,94 @@
     #F1EEEA;
 }
 
+.xiaoci-private .xp-system-statusbar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 130;
+  height: var(--xp-statusbar-h);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: 0 22px 8px;
+  color: #9B3C45;
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1;
+  pointer-events: none;
+  background: rgba(255,253,249,.76);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.xiaoci-private .xp-status-time {
+  min-width: 46px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+
+.xiaoci-private .xp-status-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 14px;
+}
+
+.xiaoci-private .xp-status-signal {
+  width: 17px;
+  height: 11px;
+  background:
+    linear-gradient(to top, currentColor 0 100%) 0 7px / 3px 4px no-repeat,
+    linear-gradient(to top, currentColor 0 100%) 5px 5px / 3px 6px no-repeat,
+    linear-gradient(to top, currentColor 0 100%) 10px 2px / 3px 9px no-repeat,
+    linear-gradient(to top, currentColor 0 100%) 15px 0 / 3px 11px no-repeat;
+}
+
+.xiaoci-private .xp-status-wifi {
+  display: inline-flex;
+  width: 15px;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  transform: rotate(180deg);
+}
+
+.xiaoci-private .xp-status-battery {
+  position: relative;
+  display: inline-flex;
+  width: 22px;
+  height: 11px;
+  align-items: center;
+  padding: 1px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+
+.xiaoci-private .xp-status-battery::after {
+  content: '';
+  position: absolute;
+  right: -3.5px;
+  width: 2px;
+  height: 5px;
+  border-radius: 0 2px 2px 0;
+  background: currentColor;
+  opacity: .65;
+}
+
+.xiaoci-private .xp-status-battery i {
+  display: block;
+  width: 72%;
+  height: 100%;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.xiaoci-private .xp-screen-content {
+  position: absolute;
+  inset: var(--xp-statusbar-h) 0 0;
+  overflow: hidden;
+}
+
 .xiaoci-private .xp-phone-frame {
   position: relative;
   width: min(430px, calc((100dvh - 32px) * 0.461373), calc(100vw - 32px));
@@ -200,8 +288,9 @@
   align-items: center;
   column-gap: 12px;
   box-sizing: border-box;
-  min-height: calc(var(--xp-statusbar-h) + var(--xp-navbar-h));
-  padding: var(--xp-statusbar-h) var(--xp-page-x) 0;
+  min-height: var(--xp-navbar-h);
+  height: var(--xp-navbar-h);
+  padding: 0 var(--xp-page-x);
   border-bottom: 1px solid var(--xp-app-line);
   background: rgba(255,253,249,.86);
   backdrop-filter: blur(24px);
@@ -403,7 +492,7 @@
 
 .xiaoci-private .xp-native-header {
   box-sizing: border-box;
-  padding-top: var(--xp-statusbar-h) !important;
+  padding-top: 0 !important;
   background: rgba(255,253,249,.86) !important;
   border-bottom: 1px solid var(--xp-app-line) !important;
   color: var(--xp-app-text);
@@ -480,7 +569,7 @@
 
 /* Every inherited top chrome reserves the same iPhone status-bar zone. */
 .xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-editor-header {
-  padding-top: var(--xp-statusbar-h) !important;
+  padding-top: 0 !important;
 }
 
 .xiaoci-private .xp-app-surface[data-xp-app="journal"] .sully-journal-editor-header > div {
@@ -490,9 +579,3 @@
   padding-right: var(--xp-page-x);
 }
 
-/* Desktop preview deliberately keeps this blank area too; real iPhone/PWA can use a larger safe-area. */
-@media (min-width: 700px) {
-  .xiaoci-private {
-    --xp-statusbar-h: 44px;
-  }
-}
