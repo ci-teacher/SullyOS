@@ -6,6 +6,7 @@ on:
       - shared-phone-foundation
       - shared-phone-work-ready
       - 'teacher-home-*'
+      - 'slack-doorbell-*'
   pull_request:
     branches:
       - master
