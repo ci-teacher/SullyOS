@@ -12,7 +12,7 @@ const LONG_SILENCE_MS = Number(process.env.WAKE_LONG_SILENCE_MS || 8 * 60 * 60_0
 const RANDOM_MEAN_HOURS = Math.max(1, Number(process.env.WAKE_RANDOM_MEAN_HOURS || 10));
 const SIGNAL_TTL_MS = Number(process.env.WAKE_SIGNAL_TTL_MS || 4 * 60 * 60_000);
 const SLACK_WAKE_WEBHOOK_URL = String(process.env.SLACK_WAKE_WEBHOOK_URL || '').trim();
-const WAKE_PHONE_URL = String(process.env.WAKE_PHONE_URL || 'https://phone.meimeibw.cc/?actor=laoshi').trim();
+const WAKE_PHONE_URL = String(process.env.WAKE_PHONE_URL || 'https://phone.meimeibw.cc/teacher').trim();
 const ONCE = process.argv.includes('--once');
 
 const db = new DatabaseSync(DB_PATH);
@@ -218,6 +218,7 @@ function wakeReasonLabel(reason) {
     new_xiaoci_activity: '小词刚在小手机里活动过',
     long_silence_with_user_activity: '小词来过一阵子了',
     random_impulse: '随机想回小手机看看',
+    doorbell_test: 'Slack 门铃联通测试',
   }[reason] || reason);
 }
 
