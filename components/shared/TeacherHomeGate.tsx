@@ -4,6 +4,8 @@ import { useOS } from '../../context/OSContext';
 import { resolveSharedActor } from '../../utils/shared/identity';
 import { isSharedApiEnabled, sharedRequest } from '../../utils/shared/sharedClient';
 import { recordSharedActivity } from '../../utils/shared/activity';
+import { createSharedEntry, listSharedEntries } from '../../utils/shared/domain';
+import type { SharedEntry } from '../../utils/shared/types';
 import {
   claimWakeSignal,
   consumeWakeSignal,
@@ -84,6 +86,10 @@ const TeacherHomeGate: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [claimedWake, setClaimedWake] = useState<SharedWakeSignal | null>(null);
   const [resolvingWake, setResolvingWake] = useState(false);
+  const [sharedNotes, setSharedNotes] = useState<SharedEntry[]>([]);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteStatus, setNoteStatus] = useState<string | null>(null);
 
   const enabled = isSharedApiEnabled();
 
@@ -91,8 +97,12 @@ const TeacherHomeGate: React.FC = () => {
     if (!enabled) return;
     setLoading(true);
     try {
-      const next = await sharedRequest<TeacherHomePayload>('/v1/teacher/home', { method: 'GET' });
+      const [next, notes] = await Promise.all([
+        sharedRequest<TeacherHomePayload>('/v1/teacher/home', { method: 'GET' }),
+        listSharedEntries({ appType: 'note', visibility: 'shared', limit: 20 }),
+      ]);
       if (next) setData(next);
+      setSharedNotes(notes);
     } finally {
       setLoading(false);
     }
@@ -128,6 +138,40 @@ const TeacherHomeGate: React.FC = () => {
     void recordSharedActivity('teacher.enter_app', 'app', id);
     openApp(id);
     setVisible(false);
+  };
+
+  const saveSharedNote = async () => {
+    const body = noteDraft.trim();
+    if (!body || savingNote) return;
+
+    setSavingNote(true);
+    setNoteStatus(null);
+    try {
+      const created = await createSharedEntry({
+        appType: 'note',
+        body,
+        visibility: 'shared',
+        author: 'laoshi',
+      });
+
+      const notes = await listSharedEntries({
+        appType: 'note',
+        visibility: 'shared',
+        limit: 20,
+      });
+      const persisted = notes.some(note => note.id === created.id);
+
+      setSharedNotes(notes);
+      if (persisted) {
+        setNoteDraft('');
+        setNoteStatus('已保存并重新读取确认。');
+      } else {
+        setNoteStatus('已提交，但暂时没有从服务器重新读到。');
+      }
+      await refresh();
+    } finally {
+      setSavingNote(false);
+    }
   };
 
   const resolveWake = async (resolution: 'acted' | 'no_action') => {
@@ -226,6 +270,64 @@ const TeacherHomeGate: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section id="shared-notes" className="mt-4 rounded-[28px] border border-black/[0.07] bg-white/75 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">共享便签</h2>
+              <p className="mt-1 text-[11px] text-black/40">老师和小词都能在这里看到的短便签。</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              className="text-[11px] text-black/40"
+            >
+              {loading ? '刷新中…' : '刷新'}
+            </button>
+          </div>
+
+          <label htmlFor="teacher-shared-note" className="mt-4 block text-xs font-semibold text-black/60">
+            新增共享便签
+          </label>
+          <textarea
+            id="teacher-shared-note"
+            aria-label="共享便签内容"
+            value={noteDraft}
+            onChange={event => setNoteDraft(event.target.value)}
+            placeholder="在这里写一张共享便签…"
+            rows={4}
+            className="mt-2 w-full resize-y rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm leading-6 outline-none placeholder:text-black/25 focus:border-[#7D3037]/40"
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={!noteDraft.trim() || savingNote}
+              onClick={() => void saveSharedNote()}
+              className="rounded-full bg-[#7D3037] px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {savingNote ? '保存中…' : '保存便签'}
+            </button>
+            {noteStatus && (
+              <span role="status" className="text-[11px] text-black/45">{noteStatus}</span>
+            )}
+          </div>
+
+          <div className="mt-5 space-y-3" aria-label="当前共享便签列表">
+            {!sharedNotes.length && (
+              <div className="rounded-2xl bg-black/[0.03] p-3 text-xs text-black/35">还没有共享便签。</div>
+            )}
+            {sharedNotes.slice(0, 8).map(note => (
+              <article key={note.id} className="rounded-2xl bg-black/[0.035] p-3">
+                <div className="flex justify-between gap-3 text-[10px] text-black/35">
+                  <span>{note.author === 'xiaoci' ? '小词' : '老师'}</span>
+                  <span>{fmt(note.updatedAt)}</span>
+                </div>
+                {note.title && <div className="mt-1 text-xs font-semibold text-black/65">{note.title}</div>}
+                <div className="mt-1 whitespace-pre-wrap text-xs leading-5 text-black/70">{note.body || '（空便签）'}</div>
+              </article>
+            ))}
           </div>
         </section>
 

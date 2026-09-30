@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - shared-phone-foundation
+      - shared-phone-work-ready
   pull_request:
     branches:
       - master
