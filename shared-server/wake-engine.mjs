@@ -218,6 +218,7 @@ function wakeReasonLabel(reason) {
     new_xiaoci_activity: '小词刚在小手机里活动过',
     long_silence_with_user_activity: '小词来过一阵子了',
     random_impulse: '随机想回小手机看看',
+    doorbell_test: 'Slack 门铃联通测试',
   }[reason] || reason);
 }
 
