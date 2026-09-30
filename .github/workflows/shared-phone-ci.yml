@@ -5,6 +5,7 @@ on:
     branches:
       - shared-phone-foundation
       - shared-phone-work-ready
+      - 'teacher-home-*'
   pull_request:
     branches:
       - master
