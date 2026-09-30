@@ -5,7 +5,7 @@ import { resolveSharedActor } from '../../utils/shared/identity';
 import { isSharedApiEnabled, sharedRequest } from '../../utils/shared/sharedClient';
 import { recordSharedActivity } from '../../utils/shared/activity';
 import { createSharedEntry, listSharedEntries } from '../../utils/shared/domain';
-import type { SharedEntry } from '../../utils/shared/types';
+import type { SharedEntry, SharedSession } from '../../utils/shared/types';
 import {
   claimWakeSignal,
   consumeWakeSignal,
@@ -38,6 +38,17 @@ interface TeacherHomePayload {
     updatedBy: 'xiaoci' | 'laoshi';
     updatedAt: number;
   }>;
+  entryCounts?: Record<string, number>;
+  recentEntries?: SharedEntry[];
+  recentLetters?: SharedEntry[];
+  recentMemories?: SharedEntry[];
+  upcomingCalendar?: SharedEntry[];
+  randomMemory?: SharedEntry | null;
+  freshCounts?: {
+    entries?: Record<string, number>;
+    resources?: Record<string, number>;
+  };
+  activeSessions?: SharedSession[];
   pendingWake?: { id: string; reason: string; priority: number; createdAt: number } | null;
 }
 
@@ -79,6 +90,24 @@ const fmt = (timestamp?: number | null) => {
   });
 };
 
+const previewValue = (value: unknown, max = 180) => {
+  if (value === null || value === undefined) return '';
+  const raw = typeof value === 'string' ? value : JSON.stringify(value);
+  const text = String(raw || '').replace(/\s+/g, ' ').trim();
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+};
+
+const sumRecord = (value?: Record<string, number>) =>
+  Object.values(value || {}).reduce((sum, count) => sum + Number(count || 0), 0);
+
+interface SharedSearchItem {
+  id: string;
+  source: string;
+  actor?: 'xiaoci' | 'laoshi';
+  occurredAt: number;
+  payload?: unknown;
+}
+
 const TeacherHomeGate: React.FC = () => {
   const { openApp } = useOS();
   const [visible, setVisible] = useState(() => resolveSharedActor() === 'laoshi');
@@ -90,6 +119,10 @@ const TeacherHomeGate: React.FC = () => {
   const [noteDraft, setNoteDraft] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [noteStatus, setNoteStatus] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<SharedSearchItem[]>([]);
+  const [searchTouched, setSearchTouched] = useState(false);
 
   const enabled = isSharedApiEnabled();
 
@@ -132,12 +165,36 @@ const TeacherHomeGate: React.FC = () => {
     [data],
   );
 
+  const freshCount = sumRecord(data?.freshCounts?.entries) + sumRecord(data?.freshCounts?.resources);
+  const noteCount = data?.entryCounts?.note ?? sharedNotes.length;
+  const sharedEntryCount = sumRecord(data?.entryCounts);
+  const sharedResourceCount = sumRecord(data?.resourceCounts);
+
   if (!visible) return null;
 
   const enterApp = (id: AppID) => {
     void recordSharedActivity('teacher.enter_app', 'app', id);
     openApp(id);
     setVisible(false);
+  };
+
+  const runSearch = async () => {
+    const query = searchQuery.trim();
+    setSearchTouched(true);
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const result = await sharedRequest<{ items: SharedSearchItem[] }>(
+        `/v1/search?q=${encodeURIComponent(query)}&limit=30`,
+        { method: 'GET' },
+      );
+      setSearchResults(result?.items || []);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const saveSharedNote = async () => {
@@ -220,7 +277,62 @@ const TeacherHomeGate: React.FC = () => {
           </div>
         )}
 
-        <section className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <section className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Teacher Home 数据总览">
+          {[
+            ['共享日记', data?.diaryCount || 0],
+            ['共享便签', noteCount],
+            ['共享记录', sharedEntryCount + sharedResourceCount],
+            ['这次的新内容', freshCount],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-[22px] border border-black/[0.07] bg-white/80 p-4">
+              <div className="text-[11px] text-black/40">{label}</div>
+              <div className="mt-1 text-2xl font-semibold tracking-tight">{value}</div>
+            </div>
+          ))}
+        </section>
+
+        <section id="shared-search" className="mt-4 rounded-[28px] border border-black/[0.07] bg-white/75 p-5" aria-label="搜索共享内容">
+          <div>
+            <h2 className="text-sm font-semibold">搜索全部共享内容</h2>
+            <p className="mt-1 text-[11px] leading-5 text-black/40">会同时检索共享日记、信件、记忆、便签和共享资源。</p>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <input
+              aria-label="共享内容搜索词"
+              value={searchQuery}
+              onChange={event => setSearchQuery(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter') void runSearch();
+              }}
+              placeholder="输入关键词…"
+              className="min-w-0 flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm outline-none placeholder:text-black/25 focus:border-[#7D3037]/40"
+            />
+            <button
+              type="button"
+              onClick={() => void runSearch()}
+              disabled={searching}
+              className="rounded-full bg-[#211c1a] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
+            >
+              {searching ? '搜索中…' : '搜索'}
+            </button>
+          </div>
+          {searchTouched && (
+            <div className="mt-4 space-y-3" aria-label="共享搜索结果">
+              {!searching && !searchResults.length && <div className="text-xs text-black/35">没有找到匹配内容。</div>}
+              {searchResults.map(item => (
+                <article key={item.id} className="rounded-2xl bg-black/[0.035] p-3">
+                  <div className="flex flex-wrap justify-between gap-2 text-[10px] text-black/35">
+                    <span>{item.source} · {item.actor === 'xiaoci' ? '小词' : item.actor === 'laoshi' ? '老师' : '共享数据'}</span>
+                    <span>{fmt(item.occurredAt)}</span>
+                  </div>
+                  <div className="mt-1 break-words text-xs leading-5 text-black/70">{previewValue(item.payload, 320) || '（无文本预览）'}</div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5" aria-label="小手机 App 入口">
           {APP_BUTTONS.map(button => (
             <button
               key={button.id}
@@ -331,10 +443,150 @@ const TeacherHomeGate: React.FC = () => {
           </div>
         </section>
 
+
+
+        <section className="mt-4 grid gap-4 lg:grid-cols-3" aria-label="信箱 记忆 日历">
+          <div id="shared-letters" className="rounded-[28px] border border-black/[0.07] bg-white/75 p-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">信箱</h2>
+              <span className="text-[10px] text-black/35">最近 {data?.recentLetters?.length || 0} 封</span>
+            </div>
+            <div className="mt-4 space-y-3">
+              {!data?.recentLetters?.length && <div className="text-xs text-black/35">暂时没有共享信件。</div>}
+              {data?.recentLetters?.map(letter => (
+                <article key={letter.id} className="rounded-2xl bg-black/[0.035] p-3">
+                  <div className="flex justify-between gap-2 text-[10px] text-black/35">
+                    <span>{letter.author === 'xiaoci' ? '小词' : '老师'}</span>
+                    <span>{fmt(letter.updatedAt)}</span>
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-black/70">{letter.title || '无标题'}</div>
+                  <div className="mt-1 whitespace-pre-wrap text-xs leading-5 text-black/60">{shortText(letter.body, 180) || '（空信件）'}</div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div id="shared-memories" className="rounded-[28px] border border-black/[0.07] bg-white/75 p-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">共享记忆</h2>
+              <span className="text-[10px] text-black/35">最近 {data?.recentMemories?.length || 0} 条</span>
+            </div>
+            {data?.randomMemory && (
+              <article className="mt-4 rounded-2xl border border-[#7D3037]/10 bg-red-50/70 p-3">
+                <div className="text-[10px] font-semibold text-[#7D3037]">随机翻到一条旧记忆</div>
+                <div className="mt-1 text-xs font-semibold text-black/70">{data.randomMemory.title || '无标题'}</div>
+                <div className="mt-1 text-xs leading-5 text-black/60">{shortText(data.randomMemory.body, 160) || '（空记录）'}</div>
+              </article>
+            )}
+            <div className="mt-3 space-y-3">
+              {!data?.recentMemories?.length && <div className="text-xs text-black/35">暂时没有共享记忆。</div>}
+              {data?.recentMemories?.map(memory => (
+                <article key={memory.id} className="rounded-2xl bg-black/[0.035] p-3">
+                  <div className="flex justify-between gap-2 text-[10px] text-black/35">
+                    <span>{memory.author === 'xiaoci' ? '小词' : '老师'}</span>
+                    <span>{fmt(memory.updatedAt)}</span>
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-black/70">{memory.title || '无标题'}</div>
+                  <div className="mt-1 text-xs leading-5 text-black/60">{shortText(memory.body, 150) || '（空记录）'}</div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div id="shared-calendar" className="rounded-[28px] border border-black/[0.07] bg-white/75 p-5">
+            <h2 className="text-sm font-semibold">接下来的日历</h2>
+            <div className="mt-4 space-y-3">
+              {!data?.upcomingCalendar?.length && <div className="text-xs text-black/35">近期没有共享日历项目。</div>}
+              {data?.upcomingCalendar?.map(item => {
+                const startsAt = Number(item.payload?.startsAt || 0);
+                return (
+                  <article key={item.id} className="rounded-2xl bg-black/[0.035] p-3">
+                    <div className="text-[10px] text-black/35">{startsAt ? fmt(startsAt) : '未设置时间'}</div>
+                    <div className="mt-1 text-xs font-semibold text-black/70">{item.title || '无标题日程'}</div>
+                    {item.body && <div className="mt-1 text-xs leading-5 text-black/60">{shortText(item.body, 150)}</div>}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-4 grid gap-4 md:grid-cols-2" aria-label="共享会话和共享记录">
+          <div id="shared-sessions" className="rounded-[28px] border border-black/[0.07] bg-white/75 p-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">进行中的共享活动</h2>
+              <span className="text-[10px] text-black/35">{data?.activeSessions?.length || 0} 个</span>
+            </div>
+            <div className="mt-4 space-y-3">
+              {!data?.activeSessions?.length && <div className="text-xs text-black/35">目前没有进行中或暂停中的共享活动。</div>}
+              {data?.activeSessions?.map(session => (
+                <article key={session.id} className="rounded-2xl bg-black/[0.035] p-3">
+                  <div className="flex flex-wrap justify-between gap-2 text-[10px] text-black/35">
+                    <span>{session.kind} · {session.status}</span>
+                    <span>{fmt(session.updatedAt)}</span>
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-black/70">{session.title || session.id}</div>
+                  <div className="mt-1 break-words text-xs leading-5 text-black/55">{previewValue(session.payload, 220) || '（无附加状态）'}</div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div id="recent-shared-entries" className="rounded-[28px] border border-black/[0.07] bg-white/75 p-5">
+            <h2 className="text-sm font-semibold">最近共享记录</h2>
+            <div className="mt-4 space-y-3">
+              {!data?.recentEntries?.length && <div className="text-xs text-black/35">暂时没有通用共享记录。</div>}
+              {data?.recentEntries?.map(entry => (
+                <article key={entry.id} className="rounded-2xl bg-black/[0.035] p-3">
+                  <div className="flex flex-wrap justify-between gap-2 text-[10px] text-black/35">
+                    <span>{entry.appType} · {entry.author === 'xiaoci' ? '小词' : '老师'} · {entry.visibility}</span>
+                    <span>{fmt(entry.updatedAt)}</span>
+                  </div>
+                  {entry.title && <div className="mt-1 text-xs font-semibold text-black/70">{entry.title}</div>}
+                  <div className="mt-1 whitespace-pre-wrap text-xs leading-5 text-black/60">{shortText(entry.body, 180) || previewValue(entry.payload, 180) || '（无文本内容）'}</div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="shared-resources" className="mt-4 rounded-[28px] border border-black/[0.07] bg-white/75 p-5" aria-label="最近共享资源">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">最近共享资源</h2>
+              <p className="mt-1 text-[11px] text-black/40">相册、Spark、小小窝等 App 同步到服务器的共享资源会出现在这里。</p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(data?.resourceCounts || {}).map(([kind, count]) => (
+                <span key={kind} className="rounded-full bg-black/[0.045] px-2.5 py-1 text-[10px] text-black/50">{kind} {count}</span>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {!data?.recentResources?.length && <div className="text-xs text-black/35">暂时没有共享资源。</div>}
+            {data?.recentResources?.map(resource => (
+              <article key={`${resource.kind}:${resource.id}`} className="rounded-2xl bg-black/[0.035] p-3">
+                <div className="flex flex-wrap justify-between gap-2 text-[10px] text-black/35">
+                  <span>{resource.kind}{resource.scope ? ` · ${resource.scope}` : ''} · {resource.updatedBy === 'xiaoci' ? '小词' : '老师'}</span>
+                  <span>{fmt(resource.updatedAt)}</span>
+                </div>
+                <div className="mt-1 break-words text-xs leading-5 text-black/60">{previewValue(resource.payload, 260) || '（无文本预览）'}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+
         {claimedWake && (
           <section className="mt-4 rounded-[24px] border border-red-900/10 bg-red-50 p-4">
             <div className="text-xs text-black/55">这次把老师叫回来的原因</div>
             <div className="mt-1 text-sm font-semibold">{claimedWake.reason}</div>
+            <div className="mt-2 grid gap-1 text-[10px] text-black/40 sm:grid-cols-2">
+              <div>优先级：{claimedWake.priority}</div>
+              <div>创建：{fmt(claimedWake.createdAt)}</div>
+              <div className="sm:col-span-2">Signal ID：{claimedWake.id}</div>
+              {claimedWake.payload && <div className="break-words sm:col-span-2">附加信息：{previewValue(claimedWake.payload, 300)}</div>}
+            </div>
             <div className="mt-4 flex gap-2">
               <button
                 disabled={resolvingWake}
