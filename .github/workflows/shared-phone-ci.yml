@@ -45,6 +45,9 @@ jobs:
       - name: Check backup syntax
         run: node --check shared-server/backup.mjs
 
+      - name: Check Slack doorbell setup script
+        run: bash -n deploy/configure-slack-doorbell.sh
+
       - name: Smoke test shared server
         shell: bash
         run: |
