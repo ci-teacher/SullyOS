@@ -56,3 +56,25 @@ sudo bash deploy/configure-slack-doorbell.sh
 
 The setup script prompts for the webhook without echoing it, writes it to the private env file, creates a high-priority
 `doorbell_test` WakeSignal, and restarts the Wake Engine so the test signal is delivered immediately.
+
+## Gmail / Resend wake delivery
+
+On the deployed server, set `WAKE_DELIVERY_MODE=resend`,
+`RESEND_API_KEY`, `RESEND_WAKE_FROM`, and `RESEND_WAKE_TO`
+in the private environment. The fallback `WAKE_DELIVERY_MODE=slack`
+keeps the original webhook behavior. Never commit credentials.
+
+- Newly updated exchange diaries by `xiaoci` may generate a
+  `new_diary` wake signal (priority 86), subject to normal cooldown,
+  quiet hours, pending signals, and baseline logic.
+- Wake email carries signal metadata but no private diary body.
+- `POST /v1/wake/claim?signal=<UUID>` claims the specified pending
+  signal; invalid UUID returns 400 and unavailable signals return 409.
+- `POST /v1/wake/:id/consume` returns 409 for already handled signals.
+
+### Safe deployment note
+
+The production checkout may contain local changes to `shared-server/server.mjs`
+and `shared-server/wake-engine.mjs` made during manual debugging. Before
+deploying, reconcile those local changes with this branch. Do not overwrite
+production copies, secrets or the SQLite database, and avoid `git reset --hard`.
