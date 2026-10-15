@@ -239,6 +239,7 @@ ON CONFLICT(id) DO UPDATE SET
 const qActivityInsert = db.prepare('INSERT OR REPLACE INTO activity(id, actor, action, target_type, target_id, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
 const qRecentActivity = db.prepare('SELECT * FROM activity ORDER BY created_at DESC LIMIT ?');
 const qPendingWake = db.prepare("SELECT * FROM wake_signals WHERE status='pending' AND (expires_at IS NULL OR expires_at > ?) ORDER BY priority DESC, created_at ASC LIMIT 1");
+const qPendingWakeById = db.prepare("SELECT * FROM wake_signals WHERE id=? AND status='pending' AND (expires_at IS NULL OR expires_at > ?)");
 const qWakeInsert = db.prepare('INSERT OR IGNORE INTO wake_signals(id, reason, priority, status, payload, created_at, expires_at, dedupe_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 const qWakeConsume = db.prepare("UPDATE wake_signals SET status='consumed', consumed_at=?, resolution=?, result_payload=?, claim_expires_at=NULL WHERE id=? AND status IN ('pending','processing')");
 const qWakeClaim = db.prepare("UPDATE wake_signals SET status='processing', claimed_at=?, claim_expires_at=? WHERE id=? AND status='pending'");
@@ -853,8 +854,17 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && path === '/v1/wake/claim') {
       const now = Date.now();
       qWakeRequeueExpiredClaims.run(now);
-      const row = qPendingWake.get(now);
-      if (!row) return send(res, 200, { wake: null });
+      const signalId = url.searchParams.get('signal');
+      if (signalId !== null && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(signalId)) {
+        return send(res, 400, { error: 'invalid signal id' });
+      }
+      const row = signalId === null
+        ? qPendingWake.get(now)
+        : qPendingWakeById.get(signalId, now);
+      if (!row) {
+        if (signalId !== null) return send(res, 409, { error: 'signal unavailable' });
+        return send(res, 200, { wake: null });
+      }
       const claimExpiresAt = now + 30 * 60_000;
       const result = qWakeClaim.run(now, claimExpiresAt, row.id);
       if (!result.changes) return send(res, 409, { error: 'wake already claimed' });
@@ -893,12 +903,13 @@ const server = http.createServer(async (req, res) => {
       const id = decodeURIComponent(path.split('/')[3]);
       const body = await readJson(req);
       const resolution = body.resolution === 'no_action' ? 'no_action' : 'acted';
-      qWakeConsume.run(
+      const result = qWakeConsume.run(
         Date.now(),
         resolution,
         body.result ? JSON.stringify(body.result) : null,
         id,
       );
+      if (!result.changes) return send(res, 409, { error: 'signal unavailable or already resolved' });
       return send(res, 200, { ok: true, resolution });
     }
 
