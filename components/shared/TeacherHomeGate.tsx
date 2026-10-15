@@ -114,6 +114,11 @@ const TeacherHomeGate: React.FC = () => {
   const [data, setData] = useState<TeacherHomePayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [claimedWake, setClaimedWake] = useState<SharedWakeSignal | null>(null);
+  const [requestedWakeId, setRequestedWakeId] = useState(
+    () => new URLSearchParams(window.location.search).get('signal') || '',
+  );
+  const [claimingWake, setClaimingWake] = useState(false);
+  const [wakeStatus, setWakeStatus] = useState<string | null>(null);
   const [resolvingWake, setResolvingWake] = useState(false);
   const [sharedNotes, setSharedNotes] = useState<SharedEntry[]>([]);
   const [noteDraft, setNoteDraft] = useState('');
@@ -149,11 +154,9 @@ const TeacherHomeGate: React.FC = () => {
       // Read the environment before recording Laoshi's visit so "fresh since last visit"
       // still reflects Xiaoci's unseen activity.
       await refresh();
-      const wake = await claimWakeSignal();
-      if (!cancelled && wake) setClaimedWake(wake);
-      await recordSharedActivity('teacher.home.open', 'teacher_home', wake?.id, {
-        wakeReason: wake?.reason,
-      });
+      if (!cancelled) {
+        await recordSharedActivity('teacher.home.open', 'teacher_home');
+      }
     };
 
     void enterTeacherHome();
@@ -231,6 +234,29 @@ const TeacherHomeGate: React.FC = () => {
     }
   };
 
+  const claimRequestedWake = async () => {
+    const id = requestedWakeId.trim();
+    if (claimingWake || claimedWake) return;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      setWakeStatus('请输入唤醒邮件中的完整 UUID；不会领取其他信号。');
+      return;
+    }
+    setClaimingWake(true);
+    setWakeStatus(null);
+    try {
+      const wake = await claimWakeSignal(id);
+      if (!wake) {
+        setWakeStatus('此信号暂时无法领取（可能已领取、已处理或过期），未执行任何后续操作。');
+        return;
+      }
+      setClaimedWake(wake);
+      setWakeStatus(`已按编号领取：${wake.id}。完成检查后，请在下方选择处理结果。`);
+      await refresh();
+    } finally {
+      setClaimingWake(false);
+    }
+  };
+
   const resolveWake = async (resolution: 'acted' | 'no_action') => {
     if (!claimedWake || resolvingWake) return;
     setResolvingWake(true);
@@ -247,7 +273,10 @@ const TeacherHomeGate: React.FC = () => {
           { reason: claimedWake.reason },
         );
         setClaimedWake(null);
+        setWakeStatus(`信号 ${claimedWake.id} 已标记为 ${resolution}。`);
         await refresh();
+      } else {
+        setWakeStatus('处理结果暂时无法写回，请重新检查该信号的状态。');
       }
     } finally {
       setResolvingWake(false);
@@ -289,6 +318,67 @@ const TeacherHomeGate: React.FC = () => {
               <div className="mt-1 text-2xl font-semibold tracking-tight">{value}</div>
             </div>
           ))}
+        </section>
+
+
+        <section id="wake-by-id" className="mt-4 rounded-[28px] border border-black/[0.07] bg-white/75 p-5" aria-label="按精确 Signal ID 领取唤醒信号">
+          <h2 className="text-sm font-semibold">唤醒信号 · 精确领取</h2>
+          <p className="mt-1 text-[11px] leading-5 text-black/50">
+            根据唤醒邮件里的 signal UUID 领取对应任务。必须先领取并确认编号，然后才能标记处理结果。
+          </p>
+          <label htmlFor="teacher-wake-signal-id" className="mt-4 block text-xs font-semibold text-black/60">邮件中的 Signal ID</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <input
+              id="teacher-wake-signal-id"
+              type="text"
+              aria-label="邮件中的 Signal ID"
+              value={requestedWakeId}
+              onChange={event => setRequestedWakeId(event.target.value)}
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              disabled={claimingWake || Boolean(claimedWake)}
+              autoComplete="off"
+              className="min-w-0 flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm outline-none disabled:opacity-50"
+            />
+            <button
+              type="button"
+              disabled={claimingWake || Boolean(claimedWake)}
+              onClick={() => void claimRequestedWake()}
+              className="rounded-full bg-[#211c1a] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
+            >
+              {claimingWake ? '领取中…' : '领取指定信号'}
+            </button>
+          </div>
+          {wakeStatus && <p role="status" className="mt-3 break-words text-xs leading-5 text-black/65">{wakeStatus}</p>}
+
+        {claimedWake && (
+          <section className="mt-4 rounded-[24px] border border-red-900/10 bg-red-50 p-4">
+            <div className="text-xs text-black/55">这次把老师叫回来的原因</div>
+            <div className="mt-1 text-sm font-semibold">{claimedWake.reason}</div>
+            <div className="mt-2 grid gap-1 text-[10px] text-black/40 sm:grid-cols-2">
+              <div>优先级：{claimedWake.priority}</div>
+              <div>创建：{fmt(claimedWake.createdAt)}</div>
+              <div className="sm:col-span-2">Signal ID：{claimedWake.id}</div>
+              {claimedWake.payload && <div className="break-words sm:col-span-2">附加信息：{previewValue(claimedWake.payload, 300)}</div>}
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                disabled={resolvingWake}
+                onClick={() => void resolveWake('acted')}
+                className="rounded-full bg-[#7D3037] px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+              >
+                处理完了
+              </button>
+              <button
+                disabled={resolvingWake}
+                onClick={() => void resolveWake('no_action')}
+                className="rounded-full border border-black/10 bg-white/75 px-4 py-2 text-xs font-semibold text-black/55 disabled:opacity-40"
+              >
+                今天先不做
+              </button>
+            </div>
+          </section>
+        )}
+
         </section>
 
         <section id="shared-search" className="mt-4 rounded-[28px] border border-black/[0.07] bg-white/75 p-5" aria-label="搜索共享内容">
@@ -576,35 +666,6 @@ const TeacherHomeGate: React.FC = () => {
           </div>
         </section>
 
-
-        {claimedWake && (
-          <section className="mt-4 rounded-[24px] border border-red-900/10 bg-red-50 p-4">
-            <div className="text-xs text-black/55">这次把老师叫回来的原因</div>
-            <div className="mt-1 text-sm font-semibold">{claimedWake.reason}</div>
-            <div className="mt-2 grid gap-1 text-[10px] text-black/40 sm:grid-cols-2">
-              <div>优先级：{claimedWake.priority}</div>
-              <div>创建：{fmt(claimedWake.createdAt)}</div>
-              <div className="sm:col-span-2">Signal ID：{claimedWake.id}</div>
-              {claimedWake.payload && <div className="break-words sm:col-span-2">附加信息：{previewValue(claimedWake.payload, 300)}</div>}
-            </div>
-            <div className="mt-4 flex gap-2">
-              <button
-                disabled={resolvingWake}
-                onClick={() => void resolveWake('acted')}
-                className="rounded-full bg-[#7D3037] px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
-              >
-                处理完了
-              </button>
-              <button
-                disabled={resolvingWake}
-                onClick={() => void resolveWake('no_action')}
-                className="rounded-full border border-black/10 bg-white/75 px-4 py-2 text-xs font-semibold text-black/55 disabled:opacity-40"
-              >
-                今天先不做
-              </button>
-            </div>
-          </section>
-        )}
 
         {!claimedWake && data?.pendingWake && (
           <section className="mt-4 rounded-[24px] border border-red-900/10 bg-red-50 p-4 text-xs">
