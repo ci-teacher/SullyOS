@@ -21,9 +21,17 @@ export async function peekWakeSignal(): Promise<SharedWakeSignal | null> {
   return result?.wake || null;
 }
 
-export async function claimWakeSignal(): Promise<SharedWakeSignal | null> {
-  const result = await sharedRequest<{ wake: SharedWakeSignal | null }>('/v1/wake/claim', { method: 'POST' });
-  return result?.wake || null;
+// Always target the exact UUID supplied by the triggering wake email.
+export async function claimWakeSignal(signalId: string): Promise<SharedWakeSignal | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(signalId)) {
+    return null;
+  }
+  const result = await sharedRequest<{ wake: SharedWakeSignal | null }>(
+    `/v1/wake/claim?signal=${encodeURIComponent(signalId)}`,
+    { method: 'POST' },
+  );
+  // Never accept a different signal in response.
+  return result?.wake?.id.toLowerCase() === signalId.toLowerCase() ? result.wake : null;
 }
 
 export async function consumeWakeSignal(
