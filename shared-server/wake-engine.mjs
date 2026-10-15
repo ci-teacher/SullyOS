@@ -12,7 +12,11 @@ const LONG_SILENCE_MS = Number(process.env.WAKE_LONG_SILENCE_MS || 8 * 60 * 60_0
 const RANDOM_MEAN_HOURS = Math.max(1, Number(process.env.WAKE_RANDOM_MEAN_HOURS || 10));
 const SIGNAL_TTL_MS = Number(process.env.WAKE_SIGNAL_TTL_MS || 4 * 60 * 60_000);
 const SLACK_WAKE_WEBHOOK_URL = String(process.env.SLACK_WAKE_WEBHOOK_URL || '').trim();
-const WAKE_PHONE_URL = String(process.env.WAKE_PHONE_URL || 'https://phone.meimeibw.cc/?actor=laoshi').trim();
+const WAKE_DELIVERY_MODE = String(process.env.WAKE_DELIVERY_MODE || 'slack').toLowerCase();
+const RESEND_API_KEY = String(process.env.RESEND_API_KEY || '').trim();
+const RESEND_WAKE_FROM = String(process.env.RESEND_WAKE_FROM || '').trim();
+const RESEND_WAKE_TO = String(process.env.RESEND_WAKE_TO || '').trim();
+const WAKE_PHONE_URL = String(process.env.WAKE_PHONE_URL || 'https://phone.meimeibw.cc/teacher').trim();
 const ONCE = process.argv.includes('--once');
 
 const db = new DatabaseSync(DB_PATH);
@@ -48,6 +52,16 @@ CREATE TABLE IF NOT EXISTS activity (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_activity_created_at ON activity(created_at DESC);
+CREATE TABLE IF NOT EXISTS diaries (
+  id TEXT PRIMARY KEY,
+  char_id TEXT NOT NULL,
+  date TEXT NOT NULL,
+  payload TEXT,
+  updated_by TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_diaries_updated_at ON diaries(updated_at DESC);
 CREATE TABLE IF NOT EXISTS entries (
   id TEXT PRIMARY KEY,
   author TEXT NOT NULL CHECK(author IN ('xiaoci','laoshi')),
@@ -136,6 +150,13 @@ LIMIT 12
 const qInsert = db.prepare('INSERT OR IGNORE INTO wake_signals(id, reason, priority, status, payload, created_at, expires_at, dedupe_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 const qExpire = db.prepare("UPDATE wake_signals SET status='expired' WHERE status='pending' AND expires_at IS NOT NULL AND expires_at <= ?");
 const qRequeueExpiredClaims = db.prepare("UPDATE wake_signals SET status='pending', claimed_at=NULL, claim_expires_at=NULL WHERE status='processing' AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?");
+const qNewDiaries = db.prepare(`
+SELECT id, char_id, date, updated_at
+FROM diaries
+WHERE updated_by='xiaoci' AND deleted=0 AND updated_at > ?
+ORDER BY updated_at DESC
+LIMIT 8
+`);
 const qNewEntries = db.prepare(`
 SELECT id, app_type, title, body, payload, updated_at
 FROM entries
@@ -210,6 +231,7 @@ function wakeReasonLabel(reason) {
     anniversary_today: '今天有纪念日',
     anniversary_tomorrow: '明天有纪念日',
     new_letter: '小词留了一封新信',
+    new_diary: '小词更新了交换日记',
     new_calendar: '共享日历有新内容',
     new_memory: '小词留下了一条新记忆',
     new_special: '有新的特别记录',
@@ -250,6 +272,53 @@ async function flushSlackDoorbell() {
   } catch (error) {
     qDoorbellAttempt.run('failed', null, row.id);
     console.error('[wake-engine] Slack doorbell failed', error);
+  }
+}
+
+async function flushResendDoorbell() {
+  if (!RESEND_API_KEY || !RESEND_WAKE_FROM || !RESEND_WAKE_TO) {
+    console.error('[wake-engine] Resend configuration incomplete');
+    return;
+  }
+
+  const row = qDoorbellPending.get(Date.now());
+  if (!row) return;
+
+  const text = [
+    '[xiaoci-phone wake]',
+    wakeReasonLabel(row.reason),
+    `reason=${row.reason}`,
+    `priority=${row.priority}`,
+    `signal=${row.id}`,
+    `open=${WAKE_PHONE_URL}`,
+  ].join('\n');
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': `xiaoci-wake-${row.id}`,
+      },
+      body: JSON.stringify({
+        from: RESEND_WAKE_FROM,
+        to: [RESEND_WAKE_TO],
+        subject: `[xiaoci-phone wake] ${wakeReasonLabel(row.reason)}`,
+        text,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!response.ok) {
+      const detail = (await response.text()).slice(0, 300);
+      throw new Error(`Resend HTTP ${response.status}: ${detail}`);
+    }
+    qDoorbellAttempt.run('sent', Date.now(), row.id);
+    console.log(`[wake-engine] Resend doorbell sent for ${row.id}`);
+  } catch (error) {
+    qDoorbellAttempt.run('failed', null, row.id);
+    console.error('[wake-engine] Resend doorbell failed', error);
   }
 }
 
@@ -349,6 +418,24 @@ function runOnce() {
     }
   }
 
+  const diaries = qNewDiaries.all(baseline).map(row => ({
+    id: row.id,
+    charId: row.char_id,
+    date: row.date,
+    updatedAt: row.updated_at,
+  }));
+
+  if (diaries.length > 0) {
+    const latest = diaries[0];
+    if (createSignal(
+      'new_diary',
+      86,
+      { count: diaries.length, latest: diaries },
+      now,
+      `diary:${latest.id}:${latest.updatedAt}`,
+    )) return;
+  }
+
   const entries = qNewEntries.all(baseline).map(row => ({
     id: row.id,
     appType: row.app_type,
@@ -419,7 +506,9 @@ function runOnce() {
   }));
 
   if (fresh.length > 0) {
-    const meaningful = fresh.filter(item => item.action !== 'phone.open');
+    const meaningful = fresh.filter(item =>
+      item.action !== 'phone.open' && item.action !== 'diary.save'
+    );
     if (meaningful.length > 0) {
       const top = meaningful[0];
       if (createSignal(
@@ -459,7 +548,13 @@ function runOnce() {
 async function safeRun() {
   try {
     runOnce();
-    await flushSlackDoorbell();
+    if (WAKE_DELIVERY_MODE === 'resend') {
+      await flushResendDoorbell();
+    } else if (WAKE_DELIVERY_MODE === 'slack') {
+      await flushSlackDoorbell();
+    } else {
+      throw new Error(`Unknown WAKE_DELIVERY_MODE: ${WAKE_DELIVERY_MODE}`);
+    }
   } catch (error) {
     console.error('[wake-engine] failed', error);
   }
@@ -468,7 +563,6 @@ async function safeRun() {
 await safeRun();
 
 if (!ONCE) {
-  setInterval(() => { void safeRun(); }, INTERVAL_MS).unref();
+  setInterval(() => { void safeRun(); }, INTERVAL_MS);
   console.log(`[wake-engine] running every ${Math.round(INTERVAL_MS / 60000)} min; timezone=${TIMEZONE}`);
-  await new Promise(() => {});
 }
